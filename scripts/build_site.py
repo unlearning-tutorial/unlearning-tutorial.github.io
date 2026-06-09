@@ -234,7 +234,11 @@ def build_page(source_path: Path, template: str, output_dir: Path) -> None:
 
 def copy_static_files(output_dir: Path) -> None:
     for filename in STATIC_FILES:
-        shutil.copy2(ROOT / filename, output_dir / filename)
+        source = ROOT / filename
+        destination = output_dir / filename
+        if source.resolve() == destination.resolve():
+            continue
+        shutil.copy2(source, destination)
 
 
 def parse_args() -> argparse.Namespace:

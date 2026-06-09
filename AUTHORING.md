@@ -16,6 +16,13 @@ python3 scripts/build_site.py --output-dir _site
 
 The repository includes a GitHub Actions workflow that runs this build automatically and publishes `_site/` to GitHub Pages on pushes to `main`.
 
+Current tutorial sources live at:
+
+- `content/part-1-motivations-for-unlearning.md`
+- `content/part-2-foundations-formal-definitions-and-algorithms.md`
+- `content/part-3-applications-of-example-level-unlearning.md`
+- `content/part-4-limitations-and-future-directions-of-example-level-unlearning.md`
+
 ## Page Structure
 
 Each content file has YAML front matter:

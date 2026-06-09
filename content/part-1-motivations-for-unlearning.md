@@ -1,9 +1,9 @@
 ---
 part: Part 1
-title: "Philosophical and Legal Motivations for Unlearning"
-description: "Part 1 of Unlearning Data at Scale: Philosophical and legal motivations for unlearning."
+title: "Motivations for Unlearning"
+description: "Part 1 of Unlearning Data at Scale: Motivations for unlearning."
 dek: "Replace this summary with a short introduction to the main normative, social, and regulatory reasons for machine unlearning."
-output: part-1-philosophical-and-legal-motivations-for-unlearning.html
+output: part-1-motivations-for-unlearning.html
 ---
 
 ## Overview {#overview}
