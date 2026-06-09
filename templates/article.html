@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{TITLE}} | Unlearning Data at Scale</title>
+    <meta name="description" content="{{DESCRIPTION}}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="article.css" />
+  </head>
+  <body>
+    <div class="article-shell">
+      <header class="article-header">
+        <a class="back-link" href="index.html">← Back to tutorial home</a>
+        <p class="article-kicker">{{PART}}</p>
+        <h1 class="article-title">{{TITLE}}</h1>
+        <p class="article-dek">{{DEK}}</p>
+      </header>
+
+      <main class="article-layout">
+        <article class="article-body">
+{{BODY}}
+        </article>
+
+        <aside class="article-aside">
+          <p class="aside-label">On This Page</p>
+          <ul class="aside-list">
+{{TOC}}
+          </ul>
+        </aside>
+      </main>
+    </div>
+  </body>
+</html>

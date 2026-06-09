@@ -1,12 +1,9 @@
 :root {
   --bg: #f4efe7;
-  --paper: rgba(255, 252, 247, 0.78);
   --ink: #1e2430;
   --muted: #566072;
   --line: rgba(30, 36, 48, 0.12);
   --accent: #b44f2f;
-  --accent-soft: #f0d8c8;
-  --shadow: 0 24px 60px rgba(50, 43, 32, 0.12);
 }
 
 * {
@@ -29,106 +26,54 @@ body {
 }
 
 .page-shell {
-  width: min(1100px, calc(100% - 2rem));
+  width: min(920px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 3rem 0 4rem;
 }
 
-.hero {
-  padding: 4rem;
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  background: var(--paper);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow);
-}
-
-.eyebrow,
-.card-label {
-  margin: 0 0 1rem;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.78rem;
+.content-stack {
+  display: grid;
+  gap: 2.5rem;
 }
 
 h1,
-h2,
-.quote {
+h2 {
   font-family: "Newsreader", serif;
 }
 
 h1 {
   margin: 0;
-  max-width: 10ch;
-  font-size: clamp(3rem, 9vw, 6rem);
-  line-height: 0.93;
+  max-width: 12ch;
+  font-size: clamp(3.2rem, 9vw, 6.2rem);
+  line-height: 0.95;
   letter-spacing: -0.04em;
 }
 
-.lead {
-  max-width: 44rem;
-  margin: 1.5rem 0 0;
-  color: var(--muted);
-  font-size: 1.05rem;
-  line-height: 1.8;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 10rem;
-  padding: 0.9rem 1.2rem;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  text-decoration: none;
+.organizers {
+  margin: 1rem 0 0;
   color: var(--ink);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
 }
 
-.button-primary {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: #fdf9f2;
+.organizer-link {
+  color: inherit;
+  text-decoration: none;
 }
 
-.button-secondary {
-  background: rgba(255, 255, 255, 0.42);
+.organizer-link:hover,
+.organizer-link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
-  margin-top: 1.25rem;
-}
-
-.card {
-  padding: 2rem;
-  border-radius: 24px;
-  border: 1px solid var(--line);
-  background: rgba(255, 252, 247, 0.68);
-  box-shadow: var(--shadow);
-}
-
-.card-wide {
-  grid-column: 1 / -1;
-  background:
-    linear-gradient(135deg, rgba(180, 79, 47, 0.1), transparent 55%),
-    rgba(255, 252, 247, 0.76);
-}
-
-h2 {
-  margin: 0 0 0.8rem;
-  font-size: 2rem;
-  line-height: 1;
+.lead {
+  max-width: 48rem;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.9;
 }
 
 p,
@@ -137,16 +82,66 @@ li {
   line-height: 1.8;
 }
 
-ul {
+.resource-list {
+  list-style: none;
   margin: 0;
-  padding-left: 1.25rem;
+  padding-left: 0;
+  display: grid;
+  gap: 1rem;
 }
 
-.quote {
-  margin: 0;
-  font-size: clamp(1.8rem, 3vw, 2.8rem);
-  line-height: 1.1;
+.resource-item {
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.resource-item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.resource-link {
   color: var(--ink);
+  text-decoration: none;
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+
+.resource-link:hover,
+.resource-link:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 0.18em;
+}
+
+.resource-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.45rem;
+}
+
+.resource-meta-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.resource-meta-link:hover,
+.resource-meta-link:focus-visible {
+  border-color: rgba(180, 79, 47, 0.35);
+  color: var(--ink);
+}
+
+.resource-meta-link-disabled {
+  opacity: 0.7;
 }
 
 @media (max-width: 800px) {
@@ -155,16 +150,7 @@ ul {
     padding-top: 1rem;
   }
 
-  .hero,
-  .card {
-    padding: 1.5rem;
-  }
-
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .card-wide {
-    grid-column: auto;
+  .content-stack {
+    gap: 2rem;
   }
 }
