@@ -206,13 +206,59 @@ def render_toc(toc: list[dict[str, str | int]]) -> str:
     return "\n".join(items)
 
 
-def build_page(source_path: Path, template: str, output_dir: Path) -> None:
-    metadata, markdown_body = parse_front_matter(source_path.read_text())
+def render_pager_link(
+    *, href: str, label: str, title: str, arrow: str, variant: str, disabled: bool = False
+) -> str:
+    classes = f"pager-link pager-link-{variant}"
+    if disabled:
+        classes += " pager-link-disabled"
+
+    return (
+        f'            <a class="{classes}" href="{html.escape(href, quote=True)}">'
+        f'<span class="pager-content"><span class="pager-arrow">{html.escape(arrow)}</span>'
+        f'<span class="pager-meta"><span class="pager-label">{html.escape(label)}</span>'
+        f'<span class="pager-title">{html.escape(title)}</span></span></span></a>'
+    )
+
+
+def render_pager(page: dict, previous_page: dict | None, next_page: dict | None) -> str:
+    prev_link = render_pager_link(
+        href=previous_page["output"] if previous_page else "#",
+        label="Previous",
+        title=previous_page["title"] if previous_page else "Start of tutorial",
+        arrow="←",
+        variant="prev",
+        disabled=previous_page is None,
+    )
+    home_link = render_pager_link(
+        href="index.html",
+        label="Home",
+        title="Return to tutorial homepage",
+        arrow="↑",
+        variant="home",
+    )
+    next_link = render_pager_link(
+        href=next_page["output"] if next_page else "#",
+        label="Next",
+        title=next_page["title"] if next_page else "End of tutorial",
+        arrow="→",
+        variant="next",
+        disabled=next_page is None,
+    )
+    return "\n".join([prev_link, home_link, next_link])
+
+
+def build_page(
+    page: dict, previous_page: dict | None, next_page: dict | None, template: str, output_dir: Path
+) -> None:
+    source_path = page["source_path"]
+    metadata = page["metadata"]
+    markdown_body = page["markdown_body"]
     body_html, toc = render_markdown(markdown_body)
     output_name = metadata["output"]
     output_path = output_dir / output_name
 
-    page = template
+    rendered_page = template
     replacements = {
         "{{TITLE}}": html.escape(metadata["title"]),
         "{{DESCRIPTION}}": html.escape(metadata["description"], quote=True),
@@ -220,14 +266,15 @@ def build_page(source_path: Path, template: str, output_dir: Path) -> None:
         "{{DEK}}": html.escape(metadata["dek"]),
         "{{BODY}}": "\n".join(f"          {line}" if line else "" for line in body_html.splitlines()),
         "{{TOC}}": render_toc(toc),
+        "{{PAGER}}": render_pager(page, previous_page, next_page),
     }
 
     for key, value in replacements.items():
-        page = page.replace(key, value)
+        rendered_page = rendered_page.replace(key, value)
 
     generated = (
         f"<!-- Generated from {source_path.relative_to(ROOT)} by scripts/build_site.py -->\n"
-        f"{page}\n"
+        f"{rendered_page}\n"
     )
     output_path.write_text(generated)
 
@@ -263,8 +310,23 @@ def main() -> None:
     template = TEMPLATE_PATH.read_text()
     if not args.skip_static:
         copy_static_files(output_dir)
+    pages = []
     for source_path in sorted(CONTENT_DIR.glob("*.md")):
-        build_page(source_path, template, output_dir)
+        metadata, markdown_body = parse_front_matter(source_path.read_text())
+        pages.append(
+            {
+                "source_path": source_path,
+                "metadata": metadata,
+                "markdown_body": markdown_body,
+                "title": metadata["title"],
+                "output": metadata["output"],
+            }
+        )
+
+    for index, page in enumerate(pages):
+        previous_page = pages[index - 1] if index > 0 else None
+        next_page = pages[index + 1] if index < len(pages) - 1 else None
+        build_page(page, previous_page, next_page, template, output_dir)
 
 
 if __name__ == "__main__":
