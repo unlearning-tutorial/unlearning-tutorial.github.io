@@ -245,7 +245,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build tutorial site pages from Markdown.")
     parser.add_argument(
         "--output-dir",
-        default=".",
+        default="_site",
         help="Directory where the generated site should be written.",
     )
     parser.add_argument(

@@ -6,13 +6,15 @@ Write tutorial content in `content/*.md`, then regenerate the site with:
 python3 scripts/build_site.py
 ```
 
-The generated HTML pages at the project root are build artifacts. Edit the Markdown sources instead.
+This writes the built site to `_site/`. Edit the Markdown sources instead of the generated HTML.
 
-For a clean local preview build directory, use:
+To rebuild automatically whenever you save a Markdown, template, or stylesheet file, run:
 
 ```bash
-python3 scripts/build_site.py --output-dir _site
+python3 scripts/watch_site.py
 ```
+
+This uses a small polling watcher written with the Python standard library, so it does not require `watchexec`, `entr`, or editor plugins.
 
 The repository includes a GitHub Actions workflow that runs this build automatically and publishes `_site/` to GitHub Pages on pushes to `main`.
 
@@ -83,6 +85,6 @@ Give each reference list item an id:
 ## Recommended Writing Loop
 
 1. Edit one `content/*.md` file.
-2. Run `python3 scripts/build_site.py`.
-3. Refresh the browser.
-4. Repeat.
+2. Run `python3 scripts/watch_site.py`.
+3. Leave the watcher running while you write.
+4. Refresh `_site/index.html` after each save.
