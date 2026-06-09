@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import argparse
+import shutil
 import html
 import re
 from pathlib import Path
@@ -12,6 +14,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT_DIR = ROOT / "content"
 TEMPLATE_PATH = ROOT / "templates" / "article.html"
+STATIC_FILES = ("index.html", "styles.css", "article.css")
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 ID_SUFFIX_RE = re.compile(r"^(.*?)\s*\{#([A-Za-z0-9_-]+)\}\s*$")
@@ -69,7 +72,7 @@ def render_inline(text: str) -> str:
 def extract_heading_data(raw_text: str) -> tuple[str, str]:
     match = ID_SUFFIX_RE.match(raw_text)
     if match:
-      return match.group(1).strip(), match.group(2)
+        return match.group(1).strip(), match.group(2)
     clean = raw_text.strip()
     return clean, slugify(clean)
 
@@ -203,11 +206,11 @@ def render_toc(toc: list[dict[str, str | int]]) -> str:
     return "\n".join(items)
 
 
-def build_page(source_path: Path, template: str) -> None:
+def build_page(source_path: Path, template: str, output_dir: Path) -> None:
     metadata, markdown_body = parse_front_matter(source_path.read_text())
     body_html, toc = render_markdown(markdown_body)
     output_name = metadata["output"]
-    output_path = ROOT / output_name
+    output_path = output_dir / output_name
 
     page = template
     replacements = {
@@ -229,10 +232,35 @@ def build_page(source_path: Path, template: str) -> None:
     output_path.write_text(generated)
 
 
+def copy_static_files(output_dir: Path) -> None:
+    for filename in STATIC_FILES:
+        shutil.copy2(ROOT / filename, output_dir / filename)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Build tutorial site pages from Markdown.")
+    parser.add_argument(
+        "--output-dir",
+        default=".",
+        help="Directory where the generated site should be written.",
+    )
+    parser.add_argument(
+        "--skip-static",
+        action="store_true",
+        help="Do not copy index.html and CSS assets to the output directory.",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+    output_dir = (ROOT / args.output_dir).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
     template = TEMPLATE_PATH.read_text()
+    if not args.skip_static:
+        copy_static_files(output_dir)
     for source_path in sorted(CONTENT_DIR.glob("*.md")):
-        build_page(source_path, template)
+        build_page(source_path, template, output_dir)
 
 
 if __name__ == "__main__":

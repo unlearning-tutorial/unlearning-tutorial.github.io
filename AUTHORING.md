@@ -8,6 +8,14 @@ python3 scripts/build_site.py
 
 The generated HTML pages at the project root are build artifacts. Edit the Markdown sources instead.
 
+For a clean local preview build directory, use:
+
+```bash
+python3 scripts/build_site.py --output-dir _site
+```
+
+The repository includes a GitHub Actions workflow that runs this build automatically and publishes `_site/` to GitHub Pages on pushes to `main`.
+
 ## Page Structure
 
 Each content file has YAML front matter:
