@@ -66,10 +66,12 @@ Add explicit heading ids so the right-hand table of contents stays stable:
 Inline citations use:
 
 ```md
-This is a claim.[@ref-1]
+This is a claim.[@gdpr-2016]
 ```
 
-That renders as a linked citation pointing to the matching reference entry.
+Use stable semantic keys instead of sequential numbers. The built site renders
+citations as `[1]`, `[2]`, and so on based on first appearance, while linking
+to the matching reference entry.
 
 ## References
 
@@ -78,9 +80,13 @@ Give each reference list item an id:
 ```md
 ## References {#references}
 
-1. {#ref-1} Author. Title. Venue, year.
-2. {#ref-2} Another reference.
+1. {#gdpr-2016} European Union. General Data Protection Regulation, 2016.
+2. {#cauwenberghs-poggio-2000} Cauwenberghs and Poggio. Incremental and Decremental SVM Learning, 2000.
 ```
+
+Within the `## References {#references}` section, the source order does not
+need to match citation order. The builder automatically reorders cited entries
+to match first appearance and leaves uncited entries after them.
 
 ## Recommended Writing Loop
 

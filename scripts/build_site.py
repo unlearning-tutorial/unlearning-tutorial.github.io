@@ -43,19 +43,14 @@ def parse_front_matter(text: str) -> tuple[dict, str]:
     return metadata, body.strip() + "\n"
 
 
-def format_citation_label(ref_id: str) -> str:
-    match = re.fullmatch(r"ref-(.+)", ref_id)
-    if match:
-        return match.group(1)
-    return ref_id
-
-
-def render_inline(text: str) -> str:
+def render_inline(
+    text: str, citation_labels: dict[str, int] | None = None
+) -> str:
     escaped = html.escape(text)
     escaped = CITATION_RE.sub(
         lambda m: (
             f'<a class="citation" href="#{html.escape(m.group(1))}">'
-            f'[{html.escape(format_citation_label(m.group(1)))}]</a>'
+            f'[{html.escape(str(get_citation_label(m.group(1), citation_labels)))}]</a>'
         ),
         escaped,
     )
@@ -67,6 +62,14 @@ def render_inline(text: str) -> str:
     escaped = STRONG_RE.sub(lambda m: f"<strong>{m.group(1)}</strong>", escaped)
     escaped = EM_RE.sub(lambda m: f"<em>{m.group(1)}</em>", escaped)
     return escaped
+
+
+def get_citation_label(ref_id: str, citation_labels: dict[str, int] | None) -> str | int:
+    if citation_labels is None:
+        return ref_id
+    if ref_id not in citation_labels:
+        citation_labels[ref_id] = len(citation_labels) + 1
+    return citation_labels[ref_id]
 
 
 def extract_heading_data(raw_text: str) -> tuple[str, str]:
@@ -85,19 +88,23 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
     quote_lines: list[str] = []
     list_type: str | None = None
     list_items: list[tuple[str, str | None]] = []
+    citation_labels: dict[str, int] = {}
+    current_section_id: str | None = None
 
     def flush_paragraph() -> None:
         nonlocal paragraph_lines
         if paragraph_lines:
             text = " ".join(line.strip() for line in paragraph_lines)
-            blocks.append(f"<p>{render_inline(text)}</p>")
+            blocks.append(f"<p>{render_inline(text, citation_labels)}</p>")
             paragraph_lines = []
 
     def flush_quote() -> None:
         nonlocal quote_lines
         if quote_lines:
             text = " ".join(line.strip() for line in quote_lines)
-            blocks.append(f"<blockquote><p>{render_inline(text)}</p></blockquote>")
+            blocks.append(
+                f"<blockquote><p>{render_inline(text, citation_labels)}</p></blockquote>"
+            )
             quote_lines = []
 
     def flush_list() -> None:
@@ -106,11 +113,20 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
             return
 
         tag = "ul" if list_type == "ul" else "ol"
+        ordered_items = list_items
+        if current_section_id == "references":
+            ordered_items = sorted(
+                list_items,
+                key=lambda item: (
+                    item[1] not in citation_labels,
+                    citation_labels.get(item[1], float("inf")),
+                ),
+            )
         rendered_items = []
-        for item_text, item_id in list_items:
+        for item_text, item_id in ordered_items:
             id_attr = f' id="{html.escape(item_id, quote=True)}"' if item_id else ""
             rendered_items.append(
-                f"  <li{id_attr}>{render_inline(item_text.strip())}</li>"
+                f"  <li{id_attr}>{render_inline(item_text.strip(), citation_labels)}</li>"
             )
         blocks.append(f"<{tag}>\n" + "\n".join(rendered_items) + f"\n</{tag}>")
         list_type = None
@@ -133,11 +149,12 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
             flush_all()
             level = len(heading_match.group(1))
             heading_text, heading_id = extract_heading_data(heading_match.group(2))
+            current_section_id = heading_id if level == 2 else current_section_id
             if level in (2, 3):
                 toc.append({"level": level, "id": heading_id, "text": heading_text})
             blocks.append(
                 f'<h{level} id="{html.escape(heading_id, quote=True)}">'
-                f"{render_inline(heading_text)}</h{level}>"
+                f"{render_inline(heading_text, citation_labels)}</h{level}>"
             )
             continue
 
