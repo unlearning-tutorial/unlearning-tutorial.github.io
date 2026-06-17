@@ -6,7 +6,10 @@ Write tutorial content in `content/*.md`, then regenerate the site with:
 python3 scripts/build_site.py
 ```
 
-This writes the built site to `_site/`. Edit the Markdown sources instead of the generated HTML.
+This writes the preview site to `_site/` and also mirrors the generated article
+pages into the repository root so GitHub Pages still works if the repository is
+served directly from the `main` branch. Edit the Markdown sources instead of
+the generated HTML.
 
 To rebuild automatically whenever you save a Markdown, template, or stylesheet file, run:
 
@@ -16,7 +19,12 @@ python3 scripts/watch_site.py
 
 This uses a small polling watcher written with the Python standard library, so it does not require `watchexec`, `entr`, or editor plugins.
 
-The repository includes a GitHub Actions workflow that runs this build automatically and publishes `_site/` to GitHub Pages on pushes to `main`.
+The repository includes a GitHub Actions workflow that runs this build
+automatically and publishes `_site/` to GitHub Pages on pushes to `main`.
+
+If GitHub Pages is configured in the repository settings, prefer `Source:
+GitHub Actions`. If it is instead set to `Deploy from a branch`, the mirrored
+root-level article pages keep the links working.
 
 Current tutorial sources live at:
 

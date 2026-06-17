@@ -1,0 +1,87 @@
+<!-- Generated from content/part-1-motivations-for-unlearning.md by scripts/build_site.py -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Motivations for Unlearning | Unlearning Data at Scale</title>
+    <meta name="description" content="Part 1 of Unlearning Data at Scale: Motivations for unlearning." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="article.css" />
+  </head>
+  <body>
+    <div class="article-shell">
+      <header class="article-header">
+        <a class="back-link" href="index.html">← Back to tutorial home</a>
+        <p class="article-kicker">Part 1</p>
+        <h1 class="article-title">Motivations for Unlearning</h1>
+        <p class="article-dek">TODO</p>
+      </header>
+
+      <main class="article-layout">
+        <article class="article-body">
+          <h2 id="introduction">Introduction</h2>
+          <p>Machine unlearning asks the following fundamental question: how does one remove training data from a machine learning model which has already been trained? Having such functionality would be extremely useful for a variety of applications. Unfortunately, the term &quot;machine unlearning&quot; is overloaded, and what it means can vary dramatically based on what specific application or use case one has in mind. We proceed to discuss some motivations, and then interpretations of what it means to perform machine unlearning. As we will see, this may differ significantly depending on the particular motivation of interest.</p>
+          <h2 id="motivations">Motivations</h2>
+          <h3 id="privacy">Data Privacy</h3>
+          <p>The most oft-stated motivation for machine unlearning is <em>data privacy</em>. Indeed, this was the primary motivation stated in the 2015 work of Cao and Yang,<a class="citation" href="#CY15">[1]</a> which is generally credited with popularizing study of machine unlearning.</p>
+          <p>Machine learning models are frequently trained on datasets containing sensitive information that belongs to people. Consider, for example, a facial recognition model which is trained on pictures of peoples&#x27; faces. Or a predictive model used in healthcare, trained on patients&#x27; electronic health records (EHRs). Yet another example is large language models (LLMs), which are frequently trained on massive, uncurated online datasets, which may contain personal information of many individuals. In all these cases, privacy of the dataset and, in general, the downstream model, enters the picture.</p>
+          <p>Privacy legislation in several jurisdictions controls what rights individuals have over their data, after it has been collected and used by an organization. Perhaps the most well-known privacy legislation is the European Union&#x27;s General Data Protection Regulation (GDPR).<a class="citation" href="#gdpr">[2]</a> Article 17 outlines the &quot;Right to erasure (&#x27;right to be forgotten&#x27;)&quot;:</p>
+          <blockquote><p>The data subject shall have the right to obtain from the controller the erasure of personal data concerning him or her without undue delay and the controller shall have the obligation to erase personal data without undue delay where one of the following grounds applies: ...</p></blockquote>
+          <p>The law goes on to enumerate several conditions under which data deletion is required, including when the data subject withdraws consent or if the data was unlawfully processed.</p>
+          <p>The GDPR is the canonical example of privacy legislation mandating a right to be forgotten, but it is far from the only one. In the United States, 22 different states have signed privacy legislation into law, and another 17 have had privacy bills introduced.<a class="citation" href="#iapp">[3]</a> Every single one of these laws and bills protects a &quot;right to delete.&quot;</p>
+          <p>If an indvidual requests for their data to be deleted, what obligations does the organization have? At the very least, the organization is obligated to delete that individual&#x27;s data from any database they may have. But the more interesting question is how this affects any models that have been trained on that individual&#x27;s data.</p>
+          <p>One 2021 case involves a California-based company, Everalbum, Inc., which non-consensually trained models on their users&#x27; photos and videos.<a class="citation" href="#ftc">[4]</a> In a settlement with the Federal Trade Commission, they were ordered to delete <em>all face embeddings and facial recognition models derived from this data</em> (see also the related concept of <em>model disgorgement</em>).</p>
+          <p>Separately, the United Kingdom&#x27;s Information Commissioner&#x27;s Office advises that models may implicitly or explicitly encode personal data which they were trained upon.<a class="citation" href="#ico">[5]</a> They suggest that obligation to remove this data from the trained model may vary depending the circumstances, and recommend implementing a model deployment pipeline that enables rapid accommodation of removal requests. Indeed, retraining an entire model from scratch due to a removal request is a rather heavy-handed solution, and if individual datapoints could be excised (i.e., <em>unlearned</em>) much more quickly, that would be preferrable.</p>
+          <h3 id="copyright">Copyright</h3>
+          <h3 id="safety">Safety</h3>
+          <p>Contain data poisoning in here too</p>
+          <h3 id="model-utility">Model Utility</h3>
+          <h3 id="understanding-model-properties">Understanding Model Properties</h3>
+          <p>One of the oldest instances of machine unlearning appears in a 2000 paper of Cauwenberghs and Poggio.<a class="citation" href="#CP00">[6]</a> They propose an online algorithm for incrementally training a Support Vector Machine (SVM): given a trained SVM, how can one quickly modify the solution so that it accounts for one more training point? They further observe that this procedure can be reversed for the purpose of &quot;decremental &#x27;unlearning,&#x27;&quot; which they motivate by the fact that one can quickly evaluate leave-one-out (LOO) performance, a classic measure used to understand model generalization.</p>
+          <h2 id="gautam-s-notes">Gautam&#x27;s Notes</h2>
+          <p>Each of these has their own nuances (some of Aloni&#x27;s comments, also link Cooper&#x27;s survey).</p>
+          <p>Will we talk about individual unlearning or concept unlearning?</p>
+          <h2 id="takeaways">Key Takeaways</h2>
+          <h2 id="references">References</h2>
+          <ol>
+            <li id="CY15">Yinzhi Cao and Junfeng Yang. <a href="https://ieeexplore.ieee.org/document/7163042"><em>Towards Making Systems Forget with Machine Unlearning</em></a>. 2015 IEEE Symposium on Security and Privacy. 2015.</li>
+            <li id="gdpr"><a href="https://gdpr-info.eu/"><em>General Data Protection Regulation</em></a>.</li>
+            <li id="iapp"><a href="https://iapp.org/resources/article/us-state-privacy-legislation-tracker"><em>US State Privacy Legislation Tracker 2026</em></a></li>
+            <li id="ftc"><a href="https://www.ftc.gov/news-events/news/press-releases/2021/01/california-company-settles-ftc-allegations-it-deceived-consumers-about-use-facial-recognition-photo"><em>California Company Settles FTC Allegations It Deceived Consumers about use of Facial Recognition in Photo Storage App</em></a>.</li>
+            <li id="ico"><a href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/how-do-we-ensure-individual-rights-in-our-ai-systems/"><em>How do we ensure individual rights in our AI systems?</em></a>.</li>
+            <li id="CP00">Gert Cauwenberghs and Tomaso Poggio. <a href="https://papers.nips.cc/paper_files/paper/2000/hash/155fa09596c7e18e50b58eb7e0c6ccb4-Abstract.html"><em>Incremental and Decremental Support Vector Machine Learning</em></a>. Advances in Neural Information Processing Systems 13. 2000.</li>
+          </ol>
+
+          <nav class="article-pager" aria-label="Tutorial navigation">
+            <a class="pager-link pager-link-prev pager-link-disabled" href="#"><span class="pager-content"><span class="pager-arrow">←</span><span class="pager-meta"><span class="pager-label">Previous</span><span class="pager-title">Start of tutorial</span></span></span></a>
+            <a class="pager-link pager-link-home" href="index.html"><span class="pager-content"><span class="pager-arrow">↑</span><span class="pager-meta"><span class="pager-label">Home</span><span class="pager-title">Return to tutorial homepage</span></span></span></a>
+            <a class="pager-link pager-link-next" href="part-2-foundations-formal-definitions-and-algorithms.html"><span class="pager-content"><span class="pager-arrow">→</span><span class="pager-meta"><span class="pager-label">Next</span><span class="pager-title">Foundations: Formal Definitions and Algorithms</span></span></span></a>
+          </nav>
+        </article>
+
+        <aside class="article-aside">
+          <p class="aside-label">On This Page</p>
+          <ul class="aside-list">
+            <li class="toc-item"><a href="#introduction">Introduction</a></li>
+            <li class="toc-item"><a href="#motivations">Motivations</a></li>
+            <li class="toc-item toc-subitem"><a href="#privacy">Data Privacy</a></li>
+            <li class="toc-item toc-subitem"><a href="#copyright">Copyright</a></li>
+            <li class="toc-item toc-subitem"><a href="#safety">Safety</a></li>
+            <li class="toc-item toc-subitem"><a href="#model-utility">Model Utility</a></li>
+            <li class="toc-item toc-subitem"><a href="#understanding-model-properties">Understanding Model Properties</a></li>
+            <li class="toc-item"><a href="#gautam-s-notes">Gautam&#x27;s Notes</a></li>
+            <li class="toc-item"><a href="#takeaways">Key Takeaways</a></li>
+            <li class="toc-item"><a href="#references">References</a></li>
+          </ul>
+        </aside>
+      </main>
+    </div>
+  </body>
+</html>
+
