@@ -317,11 +317,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Do not copy index.html and CSS assets to the output directory.",
     )
-    parser.add_argument(
-        "--skip-root-mirror",
-        action="store_true",
-        help="Do not mirror generated article pages into the repository root.",
-    )
     return parser.parse_args()
 
 
@@ -349,8 +344,6 @@ def main() -> None:
         previous_page = pages[index - 1] if index > 0 else None
         next_page = pages[index + 1] if index < len(pages) - 1 else None
         build_page(page, previous_page, next_page, template, output_dir)
-        if output_dir != ROOT and not args.skip_root_mirror:
-            build_page(page, previous_page, next_page, template, ROOT)
 
 
 if __name__ == "__main__":
