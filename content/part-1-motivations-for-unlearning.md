@@ -51,17 +51,27 @@ They suggest that obligation to remove this data from the trained model may vary
 Indeed, retraining an entire model from scratch due to a removal request is a rather heavy-handed solution, and if individual datapoints could be excised (i.e., *unlearned*) much more quickly, that would be preferrable. 
 
 
-
-
-
 ### Copyright {#copyright}
 
+US copyright
+
+Style
 
 ### Safety {#safety}
+
+Remove how to build a bomb
 
 Contain data poisoning in here too
 
 ### Model Utility
+
+Over the course of a model's deployment, concepts and distributions are likely to shift over time. 
+For example, data stating "Justin Trudeau is the Prime Minister of Canada" was no longer accurate from March 2025 onwards. 
+Models trained on older code might refer to deprecated API calls that no longer work. 
+Sometimes, the change is not so abrupt, but still significant. 
+Older texts using the word "awful" may employ an archaic definition, meaning "worthy of awe," which is very different from the modern (strictly negative) connotation. 
+Accounting for these types of stale data, potentially through machine unlearning or other post-hoc model editing techniques, is essential to making sure a model stays accurate and useful. 
+
 
 
 ### Understanding Model Properties
@@ -77,7 +87,7 @@ Each of these has their own nuances (some of Aloni's comments, also link Cooper'
 
 Will we talk about individual unlearning or concept unlearning? 
 
-## Key Takeaways {#takeaways}
+## Discussion {#discussion}
 
 
 ## References {#references}
