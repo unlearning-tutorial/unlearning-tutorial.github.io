@@ -26,6 +26,10 @@ STRONG_RE = re.compile(r"\*\*(.+?)\*\*")
 EM_RE = re.compile(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)")
 CODE_RE = re.compile(r"`([^`]+)`")
 CITATION_RE = re.compile(r"\[@([A-Za-z0-9_-]+)\]")
+INLINE_MATH_RE = re.compile(r"(?<!\\)\$(.+?)(?<!\\)\$")
+PAREN_MATH_RE = re.compile(r"\\\((.+?)\\\)")
+BRACKET_MATH_RE = re.compile(r"\\\[(.+?)\\\]")
+MATH_PLACEHOLDER_RE = re.compile(r"\x00MATH(\d+)\x00")
 
 
 def slugify(text: str) -> str:
@@ -46,7 +50,26 @@ def parse_front_matter(text: str) -> tuple[dict, str]:
 def render_inline(
     text: str, citation_labels: dict[str, int] | None = None
 ) -> str:
-    escaped = html.escape(text)
+    math_segments: list[str] = []
+
+    def stash_math(raw_math: str, display_mode: bool, left: str, right: str) -> str:
+        content = html.escape(f"{left}{raw_math}{right}")
+        tag = "div" if display_mode else "span"
+        class_name = "math math-display" if display_mode else "math math-inline"
+        math_segments.append(f"<{tag} class=\"{class_name}\">{content}</{tag}>")
+        return f"\x00MATH{len(math_segments) - 1}\x00"
+
+    protected = BRACKET_MATH_RE.sub(
+        lambda m: stash_math(m.group(1), True, r"\[", r"\]"), text
+    )
+    protected = PAREN_MATH_RE.sub(
+        lambda m: stash_math(m.group(1), False, r"\(", r"\)"), protected
+    )
+    protected = INLINE_MATH_RE.sub(
+        lambda m: stash_math(m.group(1), False, "$", "$"), protected
+    )
+
+    escaped = html.escape(protected)
     escaped = CITATION_RE.sub(
         lambda m: (
             f'<a class="citation" href="#{html.escape(m.group(1))}">'
@@ -61,6 +84,7 @@ def render_inline(
     escaped = CODE_RE.sub(lambda m: f"<code>{m.group(1)}</code>", escaped)
     escaped = STRONG_RE.sub(lambda m: f"<strong>{m.group(1)}</strong>", escaped)
     escaped = EM_RE.sub(lambda m: f"<em>{m.group(1)}</em>", escaped)
+    escaped = MATH_PLACEHOLDER_RE.sub(lambda m: math_segments[int(m.group(1))], escaped)
     return escaped
 
 
@@ -90,6 +114,8 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
     list_items: list[tuple[str, str | None]] = []
     citation_labels: dict[str, int] = {}
     current_section_id: str | None = None
+    in_math_block = False
+    math_block_lines: list[str] = []
 
     def flush_paragraph() -> None:
         nonlocal paragraph_lines
@@ -137,8 +163,32 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
         flush_quote()
         flush_list()
 
+    def flush_math_block() -> None:
+        nonlocal math_block_lines
+        if math_block_lines:
+            blocks.append(
+                '<div class="math math-display">\n'
+                f'{html.escape(f"$${chr(10).join(math_block_lines).strip()}$$")}\n'
+                "</div>"
+            )
+            math_block_lines = []
+
     for line in lines:
         stripped = line.strip()
+
+        if in_math_block:
+            if stripped == "$$":
+                flush_math_block()
+                in_math_block = False
+            else:
+                math_block_lines.append(line)
+            continue
+
+        if stripped == "$$":
+            flush_all()
+            in_math_block = True
+            math_block_lines = []
+            continue
 
         if not stripped:
             flush_all()
@@ -206,6 +256,7 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
         paragraph_lines.append(stripped)
 
     flush_all()
+    flush_math_block()
     return "\n".join(blocks), toc
 
 

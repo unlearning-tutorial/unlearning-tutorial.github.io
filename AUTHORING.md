@@ -56,6 +56,18 @@ Then write the page body in Markdown.
 - links like `[text](https://example.com)`
 - inline code with backticks
 - emphasis with `*text*` and `**text**`
+- inline math with `$...$` or `\(...\)`
+- display math blocks with `$$...$$`
+
+Example:
+
+```md
+The empirical risk is $R(\theta) = \frac{1}{n}\sum_{i=1}^n \ell(f_\theta(x_i), y_i)$.
+
+$$
+\theta^\star = \arg\min_\theta \sum_{i=1}^n \ell(f_\theta(x_i), y_i)
+$$
+```
 
 ## Anchors and Table of Contents
 
