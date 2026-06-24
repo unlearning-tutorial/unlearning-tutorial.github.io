@@ -99,21 +99,74 @@ n \gets n - 1,\ \ n_y \gets n_y - 1,\ \ n_{j,y} \gets n_{j,y} - x_j \ \mathrm{fo
 $$
 followed by recomputing all $\Pr[Y = y]$ and $\Pr[X_j = x_j |Y = y]$ as above. 
 
-We can see that exact unlearning requests can be processed quite quickly, in just $O(d)$ time. 
+We can see that exact unlearning requests can be processed quite quickly, in just $O(d)$ time for unlearning a single sample, or $O(kd)$ time for $k$ samples. 
 This also imposes minimal training overhead: no new quantities need to be computed, and we just need to store all these counters, which takes $O(d)$ additional space. 
 The largest drawback of this method is clearly that it only applies for very restrictive models. 
 Cao and Yang showed similar techniques work for other simple models, such as certain types of SVMs and decision trees, but this leaves much to be desired for more complex models employed today. 
 
-### Ginart et al. {#Ginart}
 
 ### SISA {#SISA}
 
-### Definitions {#definitions}
+SISA[@BCCJTZLP21] is a popular and flexible framework for machine unlearning.
+In constrast to the previous example, it can be employed for any model class of interest (i.e., it is *model agnostic*), though it necessitates changes to the overall architecture (via ensembling) and has other drawbacks in terms of utility and unlearning time. 
 
-### Exact and Approximate Unlearning {#exact-unlearning}
+SISA, which stands for Sharded, Isolated, Sliced, and Aggregated, is based on ideas from ensemble learning and distributed systems. 
+The core ideas is as follows: rather than training a single model on a dataset of size $n$, it partitions the data and trains $t$ models, each on a (disjoint) partition of $n/t$ data points.
+To be concrete about potential values for $t$, the authors highlight 20 as an upper bound for the number of shards, beyond which losses in utility may be too severe. 
+Outputs of these $t$ models are then aggregated in some way: for example, for classification tasks, one can consider a simple label-based majority vote. 
+
+While this is is not the full description of SISA, it already suffices to see why we can expect to have more efficient support for unlearning. 
+Suppose we wish to unlearn one training data point. 
+A simple approach is to retrain from scratch, but exclusively on the shard containing the point to be unlearned. 
+Thus, rather than retraining a model on all $n$ data points, we only retrain a model on $n/t$ data points -- if training time is linear in the dataset size, then this saves a factor of $t$ in the running time. 
+Recalling that $t$ may be on the order of $10$ to $20$, this might be an order of magnitude speedup for an unlearning request. 
+However, this advantage can quickly disappear if there are many points to be unlearned, as the amount of computation scales linearly in the number of unique shards the points requested to be unlearned fall into. 
+Therefore, if the number of points to unlearn $k \gg t$, then it is likely that the unlearning request will amount to a full retrain from scratch.
+
+The final pertinent technique in SISA is *slicing*.
+This applies a similar idea as sharding, but within the training process of each shard. 
+Within each shard, we randomly partition the data into $r$ disjoint slices. 
+We first train exclusively on the first slice within the shard.
+We then continue training on the combined first and second slice within the shard.
+In general, we go through $r$ phases, and during the $i$th phase, we train on the first $i$ slices of the shard. 
+A model checkpoint is saved at the end of each phase.
+
+Unlearning requests are again handled by only redoing computation where the points to be unlearned were employed. 
+Again, suppose we wish to unlearn one training data point. 
+As an extreme case, if the point falls into the last slice in a shard, then the first $r-1$ phases are unaffected.
+We can load the second-last model checkpoint and only re-run the last phase of training. 
+In this best-case scenario, this saves a factor of $\frac{r+1}{2}$ in the computation versus retraining the shard from scratch -- though, since we assume that the slices were partitioned uniformly at random, this event happens with probability only $1/r$. 
+On average, the point to be unlearned will fall into a slice somewhere in the middle. 
+In this case, the savings are more modest since we have to re-run several phases: with enough shards, the expected speedup is around $1.5\times$ when unlearning a single point. 
+However, once again, this decays as more points must be unlearned from a shard, since one must continue from the checkpoint before to the earliest phase containing an unlearned point. 
+
+Choosing the number of shards $t$ and the number of slices $r$ is a difficult balance. 
+Increasing the number of shards $t$ will decrease the time needed to process an unlearning request, but decrease the model's utility (as is common for ensemble methods) and increase the requisite amount of storage. 
+Increasing the number of slices $r$ also speeds up unlearning requests (up to a point), but also increases the required storage. 
+Regardless, the speedup decays rapidly as we increase the number of points to be unlearned, making SISA most appropriate when we expect to be unlearning a relatively limited number of points. 
+
+A few additional comments are in order: 
+* **Supported models**: As already mentioned, SISA is an extremely flexible framework, supporting a broad range of classifiers. There are some mild restrictions to realize the benefits of slicing: any model trained with gradient descent is suitable, but, e.g., decision trees are not, since creating a decision tree requires inspecting the entire dataset, and we can not iteratively build the tree with only one slice at a time. 
+* **Training overhead**: Training overhead for SISA is fairly minimal, though hyperparameter tuning can be more costly due to the more complex pipeline. 
+* **Supplemental Information**: This is another non-trivial overhead for SISA. In addition to storing the entire dataset, $r$ model checkpoints must be saved for each of the $t$ models in the ensemble. For suggested choices of these hyperparameters, this may incur storing more than $100$ times more weights than a single base model. 
 
 
-## References {#references}
+
+
+
+
+## TODO 
+* Heuristic methods
+* Evaluating heuristic methods
+* Heuristic methods don't really work
+
+* Provable methods
+* DP baseline
+* Gradient descent methods
+* Descent-to-delete
+* Influence functions
+
 
 1. {#DMNS06} Cynthia Dwork, Frank McSherry, Kobbi Nissim, Adam D. Smith. [Calibrating Noise to Sensitivity in Private Data Analysis](https://dl.acm.org/doi/10.1007/11681878_14). Proceedings of the Third Conference on Theory of Cryptography. 2006.
 2. {#CY15} Yinzhi Cao and Junfeng Yang. [*Towards Making Systems Forget with Machine Unlearning*](https://ieeexplore.ieee.org/document/7163042). 2015 IEEE Symposium on Security and Privacy. 2015.
+3. {#BCCJTZLP21} Lucas Bourtoule, Varun Chandrasekaran, Christopher A. Choquette-Choo, Hengrui Jia, Adelin Travers, Baiwu Zhang, David Lie, Nicolas Papernot. [*Machine Unlearning*](https://arxiv.org/abs/1912.03817). 2021 IEEE Symposium on Security and Privacy. 2021. 
