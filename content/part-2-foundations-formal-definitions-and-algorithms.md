@@ -47,8 +47,10 @@ The biggest drawback is clearly the amount of time required to serve an unlearni
 Since modern machine learning models cost an immense amount of resources to train and unlearning requests may be frequent (consider, e.g., right-to-be-forgotten requests), this solution is prohibitively expensive. 
 Hence, being able to serve unlearning requests *quickly and effectively* is the primary goal in machine unlearning. 
 
-Retraining from scratch serves as an intuitive example to introduce several other important considerations. 
+Retraining from scratch serves as an intuitive example to introduce many axes by which we judge unlearning procedures. 
+* **Unlearning time**: Poor, retraining from scratch is the slowest possible baseline. 
 * **Supported models**: Retrain-from-scratch works for absolutely any learning procedure and model, including both convex and non-convex settings. 
+* **Effect of large unlearning set**: Retraining from scratch can handle unlearning sets $S$ of any size -- sufficiently large sets will actually reduce the time slightly. 
 * **Utility**: Since retrain-from-scratch unlearning is exact, *and* the underlying model and training procedure didn't need to be changed, the model's utility will be as high as if unlearning were not a consideration. Other methods we see will compromise on one or both of these factors: either unlearning will be inexact, or the model will have to be changed to support unlearning. Utility can be lost due to either reason. 
 * **Training overhead**: Retraining from scratch does not require any additional computation at training time. Of course, this comes at the cost of significant computation required at unlearning time. We will later see methods that incur training overhead to support faster unlearning. 
 * **Supplemental information**: Besides the time required to perform an unlearning request, the supplemental information required is the biggest drawback of retraining from scratch. The supplemental information $Y$ must be equal to the entire training dataset $X$. Besides the storage required to keep the training dataset, which may be sizeable, this can also be an issue in terms of regulations related to data retention. 
@@ -56,8 +58,35 @@ Retraining from scratch serves as an intuitive example to introduce several othe
 ### Unlearning in Classifiers with Structure {#CY}
 
 Certain classes of classifiers inherently have some convenient structure, which can be exploited for efficient unlearning. 
-Following Cao and Yang,[@CY15] we demonstrate this using the naive Bayes classifier as an illustrative example.
+We first illustrate this via a toy example of mean estimation, then subsequently via the naive Bayes classifier, following the example of Cao and Yang.[@CY15]
 
+#### Mean estimation
+
+Suppose we have a dataset $x_1, \dots, x_n \in \mathbb{R}^d$, and we want to compute their average. 
+This is equivalent to finding the point that minimizes the average squared loss: 
+$$
+\mu = \arg \min_\theta \sum_{i=1}^n \|x_i - \theta\|^2.
+$$
+This quantity can easily be computed in $O(nd)$ time in the trivial way:
+$$
+\mu = \frac{1}{n} \sum_{i=1}^n x_i.
+$$
+
+Suppose we want to unlearn a single point -- without loss of generality, let that point be $x_n$. 
+We could compute the new mean $\mu'$ naively in $O(nd)$ time via "retraining from scratch":
+$$
+\mu' = \frac{1}{n-1} \sum_{i=1}^{n-1} x_i.
+$$
+But a moment's thought reveals that $\mu'$ can be obtained by a simple transformation from $\mu$. 
+Simply de-normalize, subtract out the point(s) to be unlearned, and renormalize:
+$$
+\mu'= \frac{1}{n-1}\left(n \mu - x_n\right).
+$$
+This method takes $O(d)$ time (or, for unlearning $k$ points, $O(kd)$ time), rather than the naive method, which required $O(nd)$ time. 
+Though an extremely simplistic setting, it demonstrates that certain statistical tasks have sufficient structure to permit efficient unlearning. 
+
+#### Naive Bayes 
+Now we turn our attention to naive Bayes classifiers. 
 Our training dataset will consist of $n$ datapoints, $\{(x^{(i)}, y^{(i)})\}_{i=1}^n$. 
 For simplicity, we assume the feature vectors $x \in \{0,1\}^d$ are $d$-dimensional binary vectors, and the labels $y \in \{0,1\}$ are binary. 
 
@@ -104,6 +133,14 @@ This also imposes minimal training overhead: no new quantities need to be comput
 The largest drawback of this method is clearly that it only applies for very restrictive models. 
 Cao and Yang showed similar techniques work for other simple models, such as certain types of SVMs and decision trees, but this leaves much to be desired for more complex models employed today. 
 
+To summarize: 
+* **Unlearning time**: Very efficient, linear in the size of the unlearn set. 
+* **Supported models**: Highly limited, only restricted classes of models.  
+* **Effect of large unlearning set**: Minimal, unlearning time scales linearly in size of the set. 
+* **Utility**: Exact unlearning, so it suffers no loss in utility. However, if we have to change to a model that supports this type of unlearning, we may suffer significant utility loss.  
+* **Training overhead**: Minimal, only needs to compute all the counters. 
+* **Supplemental information**: Minimal, only needs to store all the counters. 
+
 
 ### SISA {#SISA}
 
@@ -145,28 +182,139 @@ Increasing the number of shards $t$ will decrease the time needed to process an 
 Increasing the number of slices $r$ also speeds up unlearning requests (up to a point), but also increases the required storage. 
 Regardless, the speedup decays rapidly as we increase the number of points to be unlearned, making SISA most appropriate when we expect to be unlearning a relatively limited number of points. 
 
-A few additional comments are in order: 
+To summarize and discuss a few additional points : 
+* **Unlearning time**: Can be an order of magnitude speedup, depending on parameter choices. But improvement degrades quickly for larger unlearning sets.  
 * **Supported models**: As already mentioned, SISA is an extremely flexible framework, supporting a broad range of classifiers. There are some mild restrictions to realize the benefits of slicing: any model trained with gradient descent is suitable, but, e.g., decision trees are not, since creating a decision tree requires inspecting the entire dataset, and we can not iteratively build the tree with only one slice at a time. 
+* **Effect of large unlearning set**: As discussed before, if the unlearning set is too large, then SISA is no more computationally efficient than retraining from scratch. 
+* **Utility**: Exact unlearning suffers no utility loss compared to retraining from scratch, but adopting the ensemble architecture required by SISA can be costly.   
 * **Training overhead**: Training overhead for SISA is fairly minimal, though hyperparameter tuning can be more costly due to the more complex pipeline. 
-* **Supplemental Information**: This is another non-trivial overhead for SISA. In addition to storing the entire dataset, $r$ model checkpoints must be saved for each of the $t$ models in the ensemble. For suggested choices of these hyperparameters, this may incur storing more than $100$ times more weights than a single base model. 
+* **Supplemental information**: This is another non-trivial overhead for SISA. In addition to storing the entire dataset, $r$ model checkpoints must be saved for each of the $t$ models in the ensemble. For suggested choices of these hyperparameters, this may incur storing more than $100$ times more weights than a single base model. 
+
+#### Aside: Pitfalls in Adaptive Machine Unlearning
+
+The SISA allows us to illustrate an interesting pitfall of some exact unlearning methods: they implicitly assume the unlearning requests made are *independent* of the actual models published. 
+This assumption is likely to be broken: for example, individuals may request for their data to be deleted if they don't like what the model reveals about them. 
+We illustrate what can go wrong when unlearning requests are *adaptive*.[@GJNRSW21]
+
+For methods like SISA, the main problem is that the randomness of partitioning the data is performed only once, at the initial training time.
+An adversary can request points to be unlearned based on this randomness, which invalidates the exact unlearning guarantees. 
+
+We demonstrate with a toy example. 
+Consider first a model class akin to a lookup table. 
+Suppose a model $f$ is given a training dataset $\mathcal{D}$. 
+On a test example $x$, it outputs the label $y$ if $(x, y)$ is a point in $\mathcal{D}$, and $\bot$ otherwise. 
+
+Now, we consider a dataset of $2n$ points $\{(x_i, y_i)\}_{i=1}^{2n}$, where there are exactly two copies of each distinct training example. 
+Randomly partition this dataset into three shards, train a model $f$ on each of them, and predict the majority vote of the three models.
+It is easy to see that this ensemble will be correct on exactly the points where the duplicates fell into different shards. 
+The resulting accuracy of the training set will be roughly $2/3$. 
+
+However, consider what happens when the model receives an unlearning request. 
+An adversary could ask for every correctly classified point to be deleted. 
+At this point, all remaining points would have duplicates falling into the same shard, and thus be predicted incorrectly: the resulting accuracy would be $0$. 
+This is very different than what would happen if the model was retrained from scratch, since the re-randomization into new shards would result in accuracy being roughly $2/3$ for every remaining point again. 
+
+While this example is for a very simplistic case, effective attacks have been demonstrated for more realistic applications of SISA.[@GJNRSW21]
+The authors also use differential privacy to show how to mitigate such attacks. 
+However, the bigger point here is that extra care is needed to deal with messiness of unlearning requests that may arise in the real world. 
+
+
+## (Certified) Approximate Unlearning
+
+Exact unlearning is an extremely stringent requirement.
+While we have seen it can be achieved in some cases, it often comes with significant drawbacks, including only working for certain model classes, decreased utility, support for unlearning only a limited number of data points, and more. 
+To address these drawbacks, researchers have relaxed the requirement of exactness, asking only for *approximate* unlearning. 
+There are many ways one could relax exactness, we focus primarily on the most popular relaxation, which we first introduce informally. 
+
+$M$ and $U$ satisfy *approximate unlearning* if, for any training dataset $X$, unlearning dataset $S \subseteq X$, and event $T \subseteq \mathrm{Range}(M)$ we have that
+$$
+\Pr[M(X \setminus S) \in T] \approx \Pr[U(M(X), S, Y) \in T].
+$$
+
+This is the same as the definition of *exact unlearning* we introduced before, the only difference being that the $=$ is now an $\approx$. 
+That is, we should *approximately* preserve the probability of any model being output, between the two cases that a) the model is trained from scratch on $X \setminus S$ and b) the model is first trained on $X$ and then $S$ is unlearned. 
+
+The remaining question is how to define $\approx$ in this setting. 
+Borrowing from the differential privacy literature,[@DMNS06] several works[@GGVZ19][@GGHM20][@NRS21][@SAKS21] have defined approximate unlearning as follows.  
+
+$M$ and $U$ satisfy *$(\varepsilon, \delta)$-approximate unlearning* if, for any training dataset $X$, unlearning dataset $S \subseteq X$, and event $T \subseteq \mathrm{Range}(M)$ we have that
+$$
+\Pr[M(X \setminus S) \in T] \leq e^{\varepsilon}\Pr[U(M(X), S, Y) \in T] + \delta  \mathrm{, and} \\ \Pr[U(M(X), S, Y) \in T] \leq e^{\varepsilon}\Pr[M(X \setminus S) \in T] + \delta.
+$$
+To interpret this, the probability of each event should be preserved up to a multiplicative $e^\varepsilon$ (which, for small epsilon, could be thought of as roughly $1+\varepsilon$), with an additive slack of $\delta$. 
+Generally, we think of $\varepsilon$ as being a single-digit constant (e.g., $\varepsilon = 1$), while $\delta$ (which allows for probabilities of catastrophic failure of unlearning) is generally taken to be much smaller (e.g., $\delta < 10^{-5}$). 
+While this definition can be a bit of a mouthful, operationally, it suffices to know that it's generally accepted as a strong notion of approximation: if you perform unlearning, the model's behavior is very similar to as if you retrained from scratch. 
+
+With this definition in place, we turn our attention to how to guarantee approximate unlearning. 
+Perhaps surprisingly, there exist methods to *mathematically prove* (or *certify*) that an unlearning procedure satisfies approximate unlearning. 
+While these can be heavy or limited in the situations in which they apply, the ability to give mathematical guarantees of approximate unlearning is very strong. 
+
+### Differential Privacy
+
+Differential privacy (DP)[@DMNS06] is a rigorous notion of data privacy, employed in practice by many organizations, including Google, Apple, Microsoft, and the US Census Bureau. 
+As mentioned before, the most popular definition of approximate machine unlearning arises from DP.
+In fact, as we will see shortly, DP immediately implies machine unlearning, though it is not without its drawbacks. 
+
+First, we note the definition: we say an algorithm $M$ is $(\varepsilon, \delta)$-DP if, for any datasets $X$ and $X'$ that differ in exactly one element, and any event $T \subseteq \mathrm{Range}(M)$, we have that
+$$
+\Pr[M(X) \in T] \leq e^\varepsilon \Pr[M(X') \in T] + \delta. 
+$$
+
+Observe the similarity to the approximate machine unlearning definition. 
+In particular, suppose we let the learning algorithm $M$ be $(\varepsilon, \delta)$-DP, and the unlearning algorithm $U$ simply returns the same model, i.e., $U(M(X), S, Y) = M(X)$. 
+Then we have that, for any $S$ of size $1$,
+$$
+\Pr[U(M(X), S, Y) \in T] = \Pr[M(X) \in T] \\ \leq e^\varepsilon \Pr[M(X') \in T] + \delta = e^\varepsilon \Pr[M(X \setminus S) \in T] + \delta.
+$$
+The first equality is from how we defined the unlearning algorithm $U$. The inequality is due to the definition of DP. The second equality is due to the fact that $X \setminus S$ can be written as some neighboring dataset $X'$.
+To interpret what this means, it says that a differentially private algorithm has *automatically unlearned* every set of size $1$, without doing anything at all at unlearning time! 
+This can be a bit counterintuitive: *simultaneously* unlearning every point is a very strong guarantee, especially without having to do anything to process an unlearn request. 
+Nonetheless, it can be verified that it satisfies the stated definition. 
+
+As stated, DP only guarantees unlearning for unlearning sets $S$ of size $1$. 
+Fortunately, a property known as group privacy allows the guarantees to degrade gracefully for unlearning sets $S$ of size $k$, though unfortunately, at too great a cost to handle large $k$. 
+Specifically, group privacy says that an $(\varepsilon,\delta)$-DP has the following guarantees for any datasets $X$ and $X'$ which differ in exactly $k$ entries: 
+$$
+\Pr[M(X) \in T] \leq e^{k\varepsilon} \Pr[M(X') \in T] + ke^{(k-1)\varepsilon}\delta. 
+$$
+As we can see, the guarantees degrade exponentially in the size of the unlearning set $k$, which gives very weak unlearning for sets of larger size. 
+This is the principal downside of using DP directly for machine unlearning. 
+
+On the bright side, we have fairly general algorithms for training models with DP. 
+Differentially Private Stochastic Gradient Descent (DPSGD)[@SCS13][@BST14][@ACGMMTZ16] serves as drop-in private replacement for SGD, differing in that individual gradients are clipped and noise is added to their aggregate at each step. 
+Any model trained with DPSGD will be DP. 
+With significant work on DP machine learning, training overhead is relatively minor, and utility loss can be modest to significant, depending on whether or not there is public data to help the model form a strong prior -- in the setting of machine unlearning, public data serves as data that can not be unlearned. 
+
+As stated above, using DP for unlearning can be overkill: it unlearns *every* set of size $1$ simultaneously. 
+But when we want to do unlearning, we only require unlearning a particular set of interest.
+Consequently, algorithms that are tailored to the unlearning set $S$ can perform significantly better than generic DP methods, in particular, bypassing lower bounds for DP. 
+
+To summarize: 
+* **Unlearning time**: DP allows instant unlearning, as the model remains unchanged. 
+* **Effect of large unlearning set**: Unlearning guarantees weaken significantly as the unlearning set size $k$ increases. 
+* **Supported models**: DPSGD works for essentially any model trained with gradient descent, there exist DP algorithms for other settings as well. 
+* **Utility**: DP can cause a modest to significant drop in the model utility, depending on the exact setting. 
+* **Training overhead**: Modern DPSGD pipelines have minimal training time overhead. 
+* **Supplemental information**: None required. 
+
+### Influence Functions etc.
 
 
 
+## Discussion
 
+Everything kinda sucks one way or another 
 
-
-## TODO 
-* Heuristic methods
-* Evaluating heuristic methods
-* Heuristic methods don't really work
-
-* Provable methods
-* DP baseline
-* Gradient descent methods
-* Descent-to-delete
-* Influence functions
 
 
 1. {#DMNS06} Cynthia Dwork, Frank McSherry, Kobbi Nissim, Adam D. Smith. [Calibrating Noise to Sensitivity in Private Data Analysis](https://dl.acm.org/doi/10.1007/11681878_14). Proceedings of the Third Conference on Theory of Cryptography. 2006.
 2. {#CY15} Yinzhi Cao and Junfeng Yang. [*Towards Making Systems Forget with Machine Unlearning*](https://ieeexplore.ieee.org/document/7163042). 2015 IEEE Symposium on Security and Privacy. 2015.
 3. {#BCCJTZLP21} Lucas Bourtoule, Varun Chandrasekaran, Christopher A. Choquette-Choo, Hengrui Jia, Adelin Travers, Baiwu Zhang, David Lie, Nicolas Papernot. [*Machine Unlearning*](https://arxiv.org/abs/1912.03817). 2021 IEEE Symposium on Security and Privacy. 2021. 
+4. {#GJNRSW21} Varun Gupta, Christopher Jung, Seth Neel, Aaron Roth, Saeed Sharifi-Malvajerdi, Chris Waites. [*Adaptive Machine Unlearning*](https://arxiv.org/abs/2106.04378). Advances in Neural Information Processing Systems 34. 2021. 
+5. {#GGVZ19} Chuan Guo, Tom Goldstein, Awni Hannun, Laurens van der Maaten. [*Certified Data Removal from Machine Learning Models*](https://arxiv.org/abs/1911.03030). Proceedings of the 37th International Conference on Machine Learning. 2020.
+6. {#GGHM20} Antonio Ginart, Melody Y. Guan, Gregory Valiant, James Zou. [*Making AI Forget You: Data Deletion in Machine Learning*](https://arxiv.org/abs/1907.05012). Advances in Neural Information Processing Systems 32. 2019.
+7. {#NRS21} Seth Neel, Aaron Roth, Saeed Sharifi-Malvajerdi. [*Descent-to-Delete: Gradient-Based Methods for Machine Unlearning*](https://arxiv.org/abs/2007.02923). Proceedings of the 32nd International Conference on Algorithmic Learning Theory. 2021. 
+8. {#SAKS21} Ayush Sekhari, Jayadev Acharya, Gautam Kamath, Ananda Theertha Suresh. [*Remember What You Want to Forget: Algorithms for Machine Unlearning*](https://arxiv.org/abs/2103.03279). Advances in Neural Information Processing Systems 34. 2021. 
+9. {#SCS13} Shuang Song, Kamalika Chaudhuri, Anand Sarwate. [*Stochastic Gradient Descent with Differentially Private Updates*](https://ieeexplore.ieee.org/document/6736861). Proceedings of the 2013 IEEE Global Conference on Signal and Information Processing. 2013. 
+10. {#BST14} Raef Bassily, Adam Smith, Abhradeep Thakurta. [*Private Empirical Risk Minimization: Efficient Algorithms and Tight Error Bounds*](https://arxiv.org/abs/1405.7085). Proceedings of the 55th Annual Symposium on Foundations of Computer Science. 2014. 
+11. {#ACGMMTZ16} Martín Abadi, Andy Chu, Ian Goodfellow, H. Brendan McMahan, Ilya Mironov, Kunal Talwar, Li Zhang. [*Deep Learning with Differential Privacy*](https://arxiv.org/abs/1607.00133). Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security. 2016.
