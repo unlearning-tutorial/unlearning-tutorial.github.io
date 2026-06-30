@@ -1,8 +1,8 @@
 ---
 part: Part 2
-title: "Definitions and Algorithms"
-description: "Part 2 of Unlearning Data at Scale: Definitions and algorithms."
-dek: "TBD."
+title: "Definitions and Algorithms with Provable Guarantees"
+description: "Part 2 of Unlearning Data at Scale: Definitions and algorithms with provable guarantees."
+dek: "Introducing some definitions for unlearning, along with algorithms with provable guarantees that satisfy these criteria."
 output: part-2-foundations-formal-definitions-and-algorithms.html
 ---
 
