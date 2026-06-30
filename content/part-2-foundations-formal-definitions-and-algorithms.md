@@ -283,7 +283,7 @@ This is the principal downside of using DP directly for machine unlearning.
 On the bright side, we have fairly general algorithms for training models with DP. 
 Differentially Private Stochastic Gradient Descent (DPSGD)[@SCS13][@BST14][@ACGMMTZ16] serves as drop-in private replacement for SGD, differing in that individual gradients are clipped and noise is added to their aggregate at each step. 
 Any model trained with DPSGD will be DP. 
-With significant work on DP machine learning, training overhead is relatively minor, and utility loss can be modest to significant, depending on whether or not there is public data to help the model form a strong prior -- in the setting of machine unlearning, public data serves as data that can not be unlearned. 
+With significant work on DP machine learning, training overhead is relatively minor, and utility loss can be modest to significant, depending on whether or not there is public data to help the model form a strong prior[@DBHSB22] -- in the setting of machine unlearning, public data serves as data that can not be unlearned. 
 
 As stated above, using DP for unlearning can be overkill: it unlearns *every* set of size $1$ simultaneously. 
 But when we want to do unlearning, we only require unlearning a particular set of interest.
@@ -297,14 +297,69 @@ To summarize:
 * **Training overhead**: Modern DPSGD pipelines have minimal training time overhead. 
 * **Supplemental information**: None required. 
 
-### Influence Functions etc.
+### Influence Functions
 
+Influence functions are a classic technique from robust statistics.[@Hampel74]
+They have recently been popularized in machine learning, for understanding the influence of individual training data points.[@KL17]
+Consequently, they are at the heart of a key method for approximate machine unlearning.[@GGVZ19][@GAS20][@SAKS21][@SW22]
 
+The influence function is meant to answer the following question: if we changed the weight of a single training data point by an infinitessimal amount, how much would the parameters of a model trained on that dataset change? 
+In more detail, suppose we have a training dataset $\{z_i\}_{i=1}^n$, and a strongly convex loss function $\ell$. 
+The empirical risk minimization (ERM) problem asks to solve
+$$
+\hat \theta \triangleq \arg\min_\theta \frac{1}{n} \sum_{i=1}^n \ell(z_i, \theta).
+$$
+Consider increasing the weight of one point $z_j$ by a small amount $\gamma$, and define $\hat \theta_{\gamma,j}$ to be the new ERM solution:
+$$
+\hat \theta_{\gamma,j} \triangleq \arg\min_\theta \frac{1}{n} \sum_{i=1}^n \ell(z_i, \theta) + \gamma \ell(z_j, \theta). 
+$$
+
+A classic result of Cook and Weisberg[@CW82] gives us the following derivative for the parameter vector:
+$$
+\mathcal{I}(z_j) \triangleq \left. \frac{d\hat{\theta}_{\gamma,j}}{d\gamma} \right|_{\gamma=0} = -H_{\hat{\theta}}^{-1} \nabla_{\theta} \ell(z_j, \hat{\theta}),
+$$
+where $H_{\hat \theta} \triangleq \frac{1}{n}\sum_{i=1}^n \nabla_\theta^2 \ell(z_i, \hat \theta)$ is the Hessian matrix of the loss at the solution $\hat \theta$. 
+
+What does such a derivative get us? If we have $\hat \theta$, and we can compute $\mathcal{I}(z_j)$, this allows us to form the approximation
+$$
+\hat \theta_{\gamma,j} \approx \hat \theta + \gamma \mathcal{I}(z_j).
+$$
+For our setting of unlearning, $\hat \theta_{-1/n, j}$ corresponds to the ERM solution after unlearning point $z_j$, and thus we can approximate
+$$
+\hat \theta_{-1/n,j} \approx \hat \theta - \frac{1}{n}\mathcal{I}(z_j) = \hat \theta + \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} \ell(z_j, \hat{\theta}). 
+$$
+
+What did we do here? This took a quadratic approximation for the empirical risk around the original solution $\hat \theta$. 
+The resulting update corresponds to a Newton step on the point to be unlearned. 
+Note that it is straightforward to unlearn a batch of points, instead of just one: simply sum the influence functions, corresponding to taking a Newton step on the entire set of points to be unlearned. 
+
+What is the cost of this procedure? 
+The most expensive part is computing, storing, and inverting the Hessian. 
+Fortunately, this can be done at initialization, taking $O(nd^2)$ time to compute the Hessian, followed by $O(d^3)$ time to invert. 
+Subsequently, processing an unlearning request takes just $O(kd + d^2)$ time, to compute the gradients of the unlearn points, followed by the matrix-vector product to compute the update. 
+
+Note that influence functions only allow us to *approximate* the value of the *parameter vector* as if we retrained from scratch.
+In order to give the stronger guarantee as required by approximate unlearning, we must add Gaussian noise to the parameter vector in order to mask the difference; analysis is similar to the Gaussian mechanism from differential privacy.[@DKMMN06]
+
+The most significant drawback of this approach is that it gives certifiable machine unlearning only for convex models. 
+This is because we have to bound the error of the approximation due to influence functions, which can only be done for convex settings. 
+Nonetheless, there is some evidence that this method can be reasonably effective in non-convex settings.[@MTBRPMG26]
+
+In summary:  
+* **Unlearning time**: Influence functions allow for $O(d^2)$ time unlearning, independent of $n$. 
+* **Effect of large unlearning set**: Minimal, as running time scales slowly in the size of the unlearn set. However, as many requests are processed, the quality of the influence function approximation might degrade. 
+* **Supported models**: Only convex models can give certifiable machine unlearning guarantees. 
+* **Utility**: The noise addition and approximation error can give a modest decrease in utility.  
+* **Training overhead**: Can be significant, as computing and inverting the Hessian is an expensive operation. 
+* **Supplemental information**: Requires storing the inverse Hessian matrix. 
 
 ## Discussion
 
-Everything kinda sucks one way or another 
-
+In this part, we saw definitions and a variety of methods for machine unlearning.
+While all of them provide strong provable guarantees, they each have their own deficiencies. 
+Drawbacks range from significant time to perform an unlearning request, capacity for only a small number of unlearning requests, big hits to utility, or restriction to only simple (e.g., convex) models. 
+In the next part, we will see more methods for machine unlearning, which address some of these concerns by eschewing the need for certifiable unlearning. 
+As we will see, this leads to a number of other challenges, such as how to *evaluate* machine unlearning. 
 
 
 1. {#DMNS06} Cynthia Dwork, Frank McSherry, Kobbi Nissim, Adam D. Smith. [Calibrating Noise to Sensitivity in Private Data Analysis](https://dl.acm.org/doi/10.1007/11681878_14). Proceedings of the Third Conference on Theory of Cryptography. 2006.
@@ -318,3 +373,11 @@ Everything kinda sucks one way or another
 9. {#SCS13} Shuang Song, Kamalika Chaudhuri, Anand Sarwate. [*Stochastic Gradient Descent with Differentially Private Updates*](https://ieeexplore.ieee.org/document/6736861). Proceedings of the 2013 IEEE Global Conference on Signal and Information Processing. 2013. 
 10. {#BST14} Raef Bassily, Adam Smith, Abhradeep Thakurta. [*Private Empirical Risk Minimization: Efficient Algorithms and Tight Error Bounds*](https://arxiv.org/abs/1405.7085). Proceedings of the 55th Annual Symposium on Foundations of Computer Science. 2014. 
 11. {#ACGMMTZ16} Martín Abadi, Andy Chu, Ian Goodfellow, H. Brendan McMahan, Ilya Mironov, Kunal Talwar, Li Zhang. [*Deep Learning with Differential Privacy*](https://arxiv.org/abs/1607.00133). Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security. 2016.
+12. {#DBHSB22} Soham De, Leonard Berrada, Jamie Hayes, Samuel L. Smith, Borja Balle. [*Unlocking High-Accuracy Differentially Private Image Classification through Scale*](https://arxiv.org/abs/2204.13650). arXiv:2204.13650. 2022. 
+13. {#SW22} Vinith M. Suriyakumar, Ashia C. Wilson. [*Algorithms that Approximate Data Removal: New Results and Limitations*](https://arxiv.org/abs/2209.12269). Advances in Neural Information Processing Systems 35. 2022. 
+14. {#GAS20} Aditya Golatkar, Alessandro Achille, Stefano Soatto. [*Eternal Sunshine of the Spotless Net: Selective Forgetting in Deep Networks*](https://arxiv.org/abs/1911.04933). Proceedings of the 2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2020. 
+15. {#MTBRPMG26} Lev McKinney, Anvith Thudi, Juhan Bae, Tara Rezaei, Nicolas Papernot, Sheila A. McIlraith, Roger Grosse. [*Gauss-Newton Unlearning for the LLM Era*](https://arxiv.org/abs/2602.10568). Proceedings of the 4th IEEE Conference on Secure and Trustworthy Machine Learning. 2026. 
+16. {#KL17} Pang Wei Koh, Percy Liang. [*Understanding Black-box Predictions via Influence Functions*](https://arxiv.org/abs/1703.04730). Proceedings of the 34th International Conference on Machine Learning. 2017. 
+17. {#Hampel74} Frank R. Hampel. [*The Influence Curve and Its Role in Robust Estimation*](https://www.jstor.org/stable/2285666). Journal of the American Statistical Association, Vol. 69, No. 346. 1974. 
+18. {#DKMMN06} Cynthia Dwork, Krishnaram Kenthapadi, Frank McSherry, Ilya Mironov, Moni Naor. [*Our Data, Ourselves: Privacy Via Distributed Noise Generation*](https://link.springer.com/chapter/10.1007/11761679_29). Annual International Conference on the Theory and Applications of Cryptographic Techniques. 2006.
+19. [#CW82] Dennis R. Cook and Sanford Weisberg. [*Residuals and Influence in Regression*](https://conservancy.umn.edu/items/128d305b-746c-4f3d-be1b-d0e37e7ff6e9). Chapman and Hall. 1982.  
