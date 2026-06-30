@@ -19,10 +19,10 @@ As we will see, this may differ significantly depending on the particular motiva
 ### Data Privacy {#privacy}
 
 The most oft-stated motivation for machine unlearning is *data privacy*.
-Indeed, this was the primary motivation stated in the 2015 work of Cao and Yang,[@CY15] which is generally credited with popularizing study of machine unlearning. 
+Indeed, this was the primary motivation stated in the 2015 work of Cao and Yang,[@CY15] which is generally credited with popularizing the study of machine unlearning. 
 
 Machine learning models are frequently trained on datasets containing sensitive information that belongs to people. 
-Consider, for example, a facial recognition model which is trained on pictures of peoples' faces. 
+Consider, for example, a facial recognition model which is trained on pictures of people's faces. 
 Or a predictive model used in healthcare, trained on patients' electronic health records (EHRs). 
 Yet another example is large language models (LLMs), which are frequently trained on massive, uncurated online datasets, which may contain personal information of many individuals. 
 In all these cases, privacy of the dataset and, in general, the downstream model, enters the picture. 
@@ -39,7 +39,7 @@ The GDPR is the canonical example of privacy legislation mandating a right to be
 In the United States, 22 different states have signed privacy legislation into law, and another 17 have had privacy bills introduced.[@iapp]
 Every single one of these laws and bills protects a "right to delete."
 
-If an indvidual requests for their data to be deleted, what obligations does the organization have? 
+If an individual requests for their data to be deleted, what obligations does the organization have? 
 At the very least, the organization is obligated to delete that individual's data from any database they may have. 
 But the more interesting question is how this affects any models that have been trained on that individual's data. 
 
@@ -47,8 +47,8 @@ One 2021 case involves a California-based company, Everalbum, Inc., which non-co
 In a settlement with the Federal Trade Commission, they were ordered to delete *all face embeddings and facial recognition models derived from this data* (see also the related concept of *model disgorgement*). 
 
 Separately, the United Kingdom's Information Commissioner's Office advises that models may implicitly or explicitly encode personal data which they were trained upon.[@ico]
-They suggest that obligation to remove this data from the trained model may vary depending the circumstances, and recommend implementing a model deployment pipeline that enables rapid accommodation of removal requests. 
-Indeed, retraining an entire model from scratch due to a removal request is a rather heavy-handed solution, and if individual datapoints could be excised (i.e., *unlearned*) much more quickly, that would be preferrable. 
+They suggest that obligation to remove this data from the trained model may vary depending on the circumstances, and recommend implementing a model deployment pipeline that enables rapid accommodation of removal requests. 
+Indeed, retraining an entire model from scratch due to a removal request is a rather heavy-handed solution, and if individual datapoints could be excised (i.e., *unlearned*) much more quickly, that would be preferable. 
 
 
 ### Copyright {#copyright}
@@ -59,7 +59,7 @@ As already discussed, these datasets can contain significant amounts of personal
 But in addition, such datasets often contain copyrighted material, and reproduction of this material could be a violation of copyright law. 
 Indeed, the legal implications of training on copyrighted material are currently being explored in several jurisdictions.[@Getty][@NYT]
 
-Under United States copyright law, a plantiff can prove that a defendant copied their work by showing that the defendant a) had *access* to the plantiff's copyrighted work, and b) produced work with *substantial similarity* to the original elements of the plantiff's work.[@9thCircuit]
+Under United States copyright law, a plaintiff can prove that a defendant copied their work by showing that the defendant a) had *access* to the plaintiff's copyrighted work, and b) produced work with *substantial similarity* to the original elements of the plaintiff's work.[@9thCircuit]
 If a model is discovered to have been trained on copyrighted material, machine unlearning could be employed to mitigate both of these factors, reducing both the model's access to the copyrighted work, as well as the likelihood that the model will produce an output which is substantially similar. 
 
 Diffusion models are remarkably data-efficient when it comes to mimicking the *style* of an artist, requiring only a few examples before they are able to produce more images in the same style.
@@ -89,7 +89,7 @@ If the model owner becomes aware of said poisoned datapoints, they may be able t
 ### Model Utility
 
 Over the course of a model's deployment, concepts and distributions are likely to shift over time. 
-For example, data stating "Justin Trudeau is the Prime Minister of Canada" was no longer accurate from March 2025 onwards. 
+For example, data stating "Justin Trudeau is the Prime Minister of Canada" was no longer accurate after March 14, 2025. 
 Models trained on older code might refer to deprecated API calls that no longer work. 
 Sometimes, the change is not so abrupt, but still significant. 
 Older texts using the word "awful" may employ an archaic definition, meaning "worthy of awe," which is very different from the modern (strictly negative) connotation. 
@@ -109,7 +109,7 @@ All of these motivations deserve much more nuance than we provide in this tutori
 For example, Cohen, Smith, Swanberg, and Vasudevan[@CSSV23] argue that if one takes a *deletion-as-control* perspective on the right to be forgotten, then training a model once with differential privacy may suffice.
 Cooper et al.[@CCBKJFLCHHTKMMJGSDSTBVBCKDLHSBBNWCLPL25] explore considerations for copyright, privacy, and safety in much greater depth. 
 
-Cooper et al. delineate between *targeted removal* and *targeted suppression*, which is an importance distinction to make. 
+Cooper et al. delineate between *targeted removal* and *targeted suppression*, which is an important distinction to make. 
 In short, removal is concerned with eliminating the influence of individual training data points on the model, whereas suppression tries to prevent the model from producing certain outputs. 
 Confusingly, machine unlearning is often used interchangeably for both concepts, and more. 
 Clearly, there is some relationship between removal and suppression. 

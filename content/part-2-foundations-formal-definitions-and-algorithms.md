@@ -8,12 +8,12 @@ output: part-2-foundations-formal-definitions-and-algorithms.html
 
 ## Exact Unlearning {#exact}
 
-We begin with describing what we consider to be the ideal form of machine unlearning: *exact unlearning*. 
+We begin by describing what we consider to be the ideal form of machine unlearning: *exact unlearning*. 
 Informally, this requires that the model after unlearning a set of datapoints is exactly the same as if those datapoints were not trained on in the first place. 
 We set up a bit of notation to be more precise. 
 
 Let $X$ be a training dataset of size $n$ and let $M$ be a training algorithm which takes in a training dataset and outputs a trained model. 
-Furthermore, let $S \subseteq X$ be a dataset of size $k$ we wish to unlearn, and $U$ be an unlearning algorithm which takes in a trained model and set of points we wish to unlearn. 
+Furthermore, let $S \subseteq X$ be a dataset of size $k$ we wish to unlearn, and $U$ be an unlearning algorithm which takes in a trained model and a set of points we wish to unlearn. 
 Then we say that $M$ and $U$ satisfy *exact unlearning* if, for any training dataset $X$ and unlearning dataset $S \subseteq X$, we have that
 $$
 M(X \setminus S) = U(M(X), S).
@@ -145,14 +145,14 @@ To summarize:
 ### SISA {#SISA}
 
 SISA[@BCCJTZLP21] is a popular and flexible framework for machine unlearning.
-In constrast to the previous example, it can be employed for any model class of interest (i.e., it is *model agnostic*), though it necessitates changes to the overall architecture (via ensembling) and has other drawbacks in terms of utility and unlearning time. 
+In contrast to the previous example, it can be employed for any model class of interest (i.e., it is *model agnostic*), though it necessitates changes to the overall architecture (via ensembling) and has other drawbacks in terms of utility and unlearning time. 
 
 SISA, which stands for Sharded, Isolated, Sliced, and Aggregated, is based on ideas from ensemble learning and distributed systems. 
-The core ideas is as follows: rather than training a single model on a dataset of size $n$, it partitions the data and trains $t$ models, each on a (disjoint) partition of $n/t$ data points.
+The core idea is as follows: rather than training a single model on a dataset of size $n$, it partitions the data and trains $t$ models, each on a (disjoint) partition of $n/t$ data points.
 To be concrete about potential values for $t$, the authors highlight 20 as an upper bound for the number of shards, beyond which losses in utility may be too severe. 
 Outputs of these $t$ models are then aggregated in some way: for example, for classification tasks, one can consider a simple label-based majority vote. 
 
-While this is is not the full description of SISA, it already suffices to see why we can expect to have more efficient support for unlearning. 
+While this is not the full description of SISA, it already suffices to see why we can expect to have more efficient support for unlearning. 
 Suppose we wish to unlearn one training data point. 
 A simple approach is to retrain from scratch, but exclusively on the shard containing the point to be unlearned. 
 Thus, rather than retraining a model on all $n$ data points, we only retrain a model on $n/t$ data points -- if training time is linear in the dataset size, then this saves a factor of $t$ in the running time. 
@@ -175,14 +175,14 @@ We can load the second-last model checkpoint and only re-run the last phase of t
 In this best-case scenario, this saves a factor of $\frac{r+1}{2}$ in the computation versus retraining the shard from scratch -- though, since we assume that the slices were partitioned uniformly at random, this event happens with probability only $1/r$. 
 On average, the point to be unlearned will fall into a slice somewhere in the middle. 
 In this case, the savings are more modest since we have to re-run several phases: with enough shards, the expected speedup is around $1.5\times$ when unlearning a single point. 
-However, once again, this decays as more points must be unlearned from a shard, since one must continue from the checkpoint before to the earliest phase containing an unlearned point. 
+However, once again, this decays as more points must be unlearned from a shard, since one must continue from the checkpoint before the earliest phase containing an unlearned point. 
 
 Choosing the number of shards $t$ and the number of slices $r$ is a difficult balance. 
 Increasing the number of shards $t$ will decrease the time needed to process an unlearning request, but decrease the model's utility (as is common for ensemble methods) and increase the requisite amount of storage. 
 Increasing the number of slices $r$ also speeds up unlearning requests (up to a point), but also increases the required storage. 
 Regardless, the speedup decays rapidly as we increase the number of points to be unlearned, making SISA most appropriate when we expect to be unlearning a relatively limited number of points. 
 
-To summarize and discuss a few additional points : 
+To summarize and discuss a few additional points:
 * **Unlearning time**: Can be an order of magnitude speedup, depending on parameter choices. But improvement degrades quickly for larger unlearning sets.  
 * **Supported models**: As already mentioned, SISA is an extremely flexible framework, supporting a broad range of classifiers. There are some mild restrictions to realize the benefits of slicing: any model trained with gradient descent is suitable, but, e.g., decision trees are not, since creating a decision tree requires inspecting the entire dataset, and we can not iteratively build the tree with only one slice at a time. 
 * **Effect of large unlearning set**: As discussed before, if the unlearning set is too large, then SISA is no more computationally efficient than retraining from scratch. 
@@ -192,7 +192,7 @@ To summarize and discuss a few additional points :
 
 #### Aside: Pitfalls in Adaptive Machine Unlearning
 
-The SISA allows us to illustrate an interesting pitfall of some exact unlearning methods: they implicitly assume the unlearning requests made are *independent* of the actual models published. 
+SISA allows us to illustrate an interesting pitfall of some exact unlearning methods: they implicitly assume the unlearning requests made are *independent* of the actual models published. 
 This assumption is likely to be broken: for example, individuals may request for their data to be deleted if they don't like what the model reveals about them. 
 We illustrate what can go wrong when unlearning requests are *adaptive*.[@GJNRSW21]
 
@@ -239,7 +239,10 @@ Borrowing from the differential privacy literature,[@DMNS06] several works[@GGVZ
 
 $M$ and $U$ satisfy *$(\varepsilon, \delta)$-approximate unlearning* if, for any training dataset $X$, unlearning dataset $S \subseteq X$, and event $T \subseteq \mathrm{Range}(M)$ we have that
 $$
-\Pr[M(X \setminus S) \in T] \leq e^{\varepsilon}\Pr[U(M(X), S, Y) \in T] + \delta  \mathrm{, and} \\ \Pr[U(M(X), S, Y) \in T] \leq e^{\varepsilon}\Pr[M(X \setminus S) \in T] + \delta.
+\begin{aligned}
+\Pr[M(X \setminus S) \in T] &\leq e^{\varepsilon}\Pr[U(M(X), S, Y) \in T] + \delta, \\
+\Pr[U(M(X), S, Y) \in T] &\leq e^{\varepsilon}\Pr[M(X \setminus S) \in T] + \delta.
+\end{aligned}
 $$
 To interpret this, the probability of each event should be preserved up to a multiplicative $e^\varepsilon$ (which, for small epsilon, could be thought of as roughly $1+\varepsilon$), with an additive slack of $\delta$. 
 Generally, we think of $\varepsilon$ as being a single-digit constant (e.g., $\varepsilon = 1$), while $\delta$ (which allows for probabilities of catastrophic failure of unlearning) is generally taken to be much smaller (e.g., $\delta < 10^{-5}$). 
@@ -273,7 +276,7 @@ Nonetheless, it can be verified that it satisfies the stated definition.
 
 As stated, DP only guarantees unlearning for unlearning sets $S$ of size $1$. 
 Fortunately, a property known as group privacy allows the guarantees to degrade gracefully for unlearning sets $S$ of size $k$, though unfortunately, at too great a cost to handle large $k$. 
-Specifically, group privacy says that an $(\varepsilon,\delta)$-DP has the following guarantees for any datasets $X$ and $X'$ which differ in exactly $k$ entries: 
+Specifically, group privacy says that an $(\varepsilon,\delta)$-DP algorithm satisfies the following guarantees for any datasets $X$ and $X'$ which differ in exactly $k$ entries: 
 $$
 \Pr[M(X) \in T] \leq e^{k\varepsilon} \Pr[M(X') \in T] + ke^{(k-1)\varepsilon}\delta. 
 $$
@@ -281,9 +284,9 @@ As we can see, the guarantees degrade exponentially in the size of the unlearnin
 This is the principal downside of using DP directly for machine unlearning. 
 
 On the bright side, we have fairly general algorithms for training models with DP. 
-Differentially Private Stochastic Gradient Descent (DPSGD)[@SCS13][@BST14][@ACGMMTZ16] serves as drop-in private replacement for SGD, differing in that individual gradients are clipped and noise is added to their aggregate at each step. 
+Differentially Private Stochastic Gradient Descent (DPSGD)[@SCS13][@BST14][@ACGMMTZ16] serves as a drop-in private replacement for SGD, differing in that individual gradients are clipped and noise is added to their aggregate at each step. 
 Any model trained with DPSGD will be DP. 
-With significant work on DP machine learning, training overhead is relatively minor, and utility loss can be modest to significant, depending on whether or not there is public data to help the model form a strong prior[@DBHSB22] -- in the setting of machine unlearning, public data serves as data that can not be unlearned. 
+With significant work on DP machine learning, training overhead is relatively minor, and utility loss can be modest to significant, depending on whether or not there is public data to help the model form a strong prior[@DBHSB22] -- in the setting of machine unlearning, public data serves as data that cannot be unlearned. 
 
 As stated above, using DP for unlearning can be overkill: it unlearns *every* set of size $1$ simultaneously. 
 But when we want to do unlearning, we only require unlearning a particular set of interest.
@@ -303,7 +306,7 @@ Influence functions are a classic technique from robust statistics.[@Hampel74]
 They have recently been popularized in machine learning, for understanding the influence of individual training data points.[@KL17]
 Consequently, they are at the heart of a key method for approximate machine unlearning.[@GGVZ19][@GAS20][@SAKS21][@SW22]
 
-The influence function is meant to answer the following question: if we changed the weight of a single training data point by an infinitessimal amount, how much would the parameters of a model trained on that dataset change? 
+The influence function is meant to answer the following question: if we changed the weight of a single training data point by an infinitesimal amount, how much would the parameters of a model trained on that dataset change? 
 In more detail, suppose we have a training dataset $\{z_i\}_{i=1}^n$, and a strongly convex loss function $\ell$. 
 The empirical risk minimization (ERM) problem asks to solve
 $$
