@@ -14,7 +14,7 @@ Unfortunately, the term "machine unlearning" is overloaded, and what it means ca
 We proceed to discuss some motivations, and then interpretations of what it means to perform machine unlearning.
 As we will see, this may differ significantly depending on the particular motivation of interest. 
 
-## Motivations
+## Motivations {#motivations}
 
 ### Data Privacy {#privacy}
 
@@ -86,7 +86,7 @@ In a data poisoning attack, a malicious adversary injects a small number of trai
 If the model owner becomes aware of said poisoned datapoints, they may be able to efficiently mitigate their effect using machine unlearning. 
 
 
-### Model Utility
+### Model Utility {#model-utility}
 
 Over the course of a model's deployment, concepts and distributions are likely to shift over time. 
 For example, data stating "Justin Trudeau is the Prime Minister of Canada" was no longer accurate after March 14, 2025. 
@@ -97,7 +97,7 @@ Accounting for these types of stale data, potentially through machine unlearning
 
 
 
-### Understanding Model Properties
+### Understanding Model Properties {#understanding-model-properties}
 
 One of the oldest instances of machine unlearning appears in a 2000 paper of Cauwenberghs and Poggio.[@CP00]
 They propose an online algorithm for incrementally training a Support Vector Machine (SVM): given a trained SVM, how can one quickly modify the solution so that it accounts for one more training point? 

@@ -270,6 +270,7 @@ $$
 \Pr[U(M(X), S, Y) \in T] = \Pr[M(X) \in T] \\ \leq e^\varepsilon \Pr[M(X') \in T] + \delta = e^\varepsilon \Pr[M(X \setminus S) \in T] + \delta.
 $$
 The first equality is from how we defined the unlearning algorithm $U$. The inequality is due to the definition of DP. The second equality is due to the fact that $X \setminus S$ can be written as some neighboring dataset $X'$.
+We can obtain the inequality with $M(X \setminus S)$ and $U(M(X), S, Y)$ swapped similarly. 
 To interpret what this means, it says that a differentially private algorithm has *automatically unlearned* every set of size $1$, without doing anything at all at unlearning time! 
 This can be a bit counterintuitive: *simultaneously* unlearning every point is a very strong guarantee, especially without having to do anything to process an unlearn request. 
 Nonetheless, it can be verified that it satisfies the stated definition. 
@@ -300,7 +301,7 @@ To summarize:
 * **Training overhead**: Modern DPSGD pipelines have minimal training time overhead. 
 * **Supplemental information**: None required. 
 
-### Influence Functions
+### Influence Functions {#influence-functions}
 
 Influence functions are a classic technique from robust statistics.[@Hampel74]
 They have recently been popularized in machine learning, for understanding the influence of individual training data points.[@KL17]
@@ -356,7 +357,7 @@ In summary:
 * **Training overhead**: Can be significant, as computing and inverting the Hessian is an expensive operation. 
 * **Supplemental information**: Requires storing the inverse Hessian matrix. 
 
-## Discussion
+## Discussion {#discussion}
 
 In this part, we saw definitions and a variety of methods for machine unlearning.
 While all of them provide strong provable guarantees, they each have their own deficiencies. 
@@ -364,6 +365,7 @@ Drawbacks range from significant time to perform an unlearning request, capacity
 In the next part, we will see more methods for machine unlearning, which address some of these concerns by eschewing the need for certifiable unlearning. 
 As we will see, this leads to a number of other challenges, such as how to *evaluate* machine unlearning. 
 
+## References {#references}
 
 1. {#DMNS06} Cynthia Dwork, Frank McSherry, Kobbi Nissim, Adam D. Smith. [Calibrating Noise to Sensitivity in Private Data Analysis](https://dl.acm.org/doi/10.1007/11681878_14). Proceedings of the Third Conference on Theory of Cryptography. 2006.
 2. {#CY15} Yinzhi Cao and Junfeng Yang. [*Towards Making Systems Forget with Machine Unlearning*](https://ieeexplore.ieee.org/document/7163042). 2015 IEEE Symposium on Security and Privacy. 2015.
