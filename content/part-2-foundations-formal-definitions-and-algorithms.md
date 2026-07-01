@@ -33,7 +33,7 @@ $$
 
 As one last modification for the time being: at present, the unlearning algorithm $U$ has access only to the trained model $M(X)$ and the datapoints to be unlearned $S$. 
 In general, the unlearning algorithm will need additional information to handle unlearning requests. 
-We abstractly denote this *supplemental information* as $Y$, which is the third argument for the unlearning algorithm: $U(M(X), S, Y)$. 
+We abstractly denote this *supplemental information* as $Y$, which is the third argument for the unlearning algorithm: $U(M(X), S, Y)$.[as: Shall we use the notation Aux or something else instead of Y? In ML, (X, Y) are often used for data samples and thus can be confusing.]
 
 ## Exact Unlearning Algorithms {#exact-algorithms}
 
@@ -43,8 +43,7 @@ With exact unlearning defined, we start with the most obvious method for machine
 As the name suggests, the unlearning procedure $U(M(X), S, Y)$ simply discards the existing model $M(X)$ and trains a model $M(X \setminus S)$ sans the unlearning dataset $S$. 
 It is not hard to see that this satisfies exact unlearning. 
 
-The biggest drawback is clearly the amount of time required to serve an unlearning request: even if only a *single point* is to be unlearned ($k=1$), the time required is roughly the same as training the model in the first place, $\Omega(n)$. 
-Since modern machine learning models cost an immense amount of resources to train and unlearning requests may be frequent (consider, e.g., right-to-be-forgotten requests), this solution is prohibitively expensive. 
+The biggest drawback is clearly the amount of time required to serve an unlearning request: even if only a *single point* is to be unlearned ($k=1$), the time required is roughly the same as training the model in the first place, $\Omega(n)$ (in most practical settings). Since modern machine learning models cost an immense amount of resources to train and unlearning requests may be frequent (consider, e.g., right-to-be-forgotten requests), this solution is prohibitively expensive. 
 Hence, being able to serve unlearning requests *quickly and effectively* is the primary goal in machine unlearning. 
 
 Retraining from scratch serves as an intuitive example to introduce many axes by which we judge unlearning procedures. 
@@ -53,7 +52,7 @@ Retraining from scratch serves as an intuitive example to introduce many axes by
 * **Effect of large unlearning set**: Retraining from scratch can handle unlearning sets $S$ of any size -- sufficiently large sets will actually reduce the time slightly. 
 * **Utility**: Since retrain-from-scratch unlearning is exact, *and* the underlying model and training procedure didn't need to be changed, the model's utility will be as high as if unlearning were not a consideration. Other methods we see will compromise on one or both of these factors: either unlearning will be inexact, or the model will have to be changed to support unlearning. Utility can be lost due to either reason. 
 * **Training overhead**: Retraining from scratch does not require any additional computation at training time. Of course, this comes at the cost of significant computation required at unlearning time. We will later see methods that incur training overhead to support faster unlearning. 
-* **Supplemental information**: Besides the time required to perform an unlearning request, the supplemental information required is the biggest drawback of retraining from scratch. The supplemental information $Y$ must be equal to the entire training dataset $X$. Besides the storage required to keep the training dataset, which may be sizeable, this can also be an issue in terms of regulations related to data retention. 
+* **Supplemental information**: Besides the time required to perform an unlearning request, the supplemental information required is the biggest drawback of retraining from scratch. The supplemental information $Y$ must be equal to the entire training dataset $X$. Besides the storage required to keep the training dataset, which may be sizeable, this can also be an issue in terms of regulations related to data retention.[as: Actually, is storing the entire dataset the BIGGEST drawback? I feel these days people are OK storing the dataset as model size is much bigger.][as: Are you hoping to first properly lay out the different tradeoffs associated with this problem?]
 
 ### Unlearning in Classifiers with Structure {#CY}
 
@@ -88,7 +87,7 @@ Though an extremely simplistic setting, it demonstrates that certain statistical
 #### Naive Bayes 
 Now we turn our attention to naive Bayes classifiers. 
 Our training dataset will consist of $n$ datapoints, $\{(x^{(i)}, y^{(i)})\}_{i=1}^n$. 
-For simplicity, we assume the feature vectors $x \in \{0,1\}^d$ are $d$-dimensional binary vectors, and the labels $y \in \{0,1\}$ are binary. 
+For simplicity, we assume the feature vectors $x \in \{0,1\}^d$ are $d$-dimensional binary vectors, and the labels $y \in \{0,1\}$ are binary.[as: I hope you are not planning to spend too much time on this. At least, the text looks too long]
 
 To recall, Bayes' theorem implies that 
 $$
@@ -131,12 +130,12 @@ followed by recomputing all $\Pr[Y = y]$ and $\Pr[X_j = x_j |Y = y]$ as above.
 We can see that exact unlearning requests can be processed quite quickly, in just $O(d)$ time for unlearning a single sample, or $O(kd)$ time for $k$ samples. 
 This also imposes minimal training overhead: no new quantities need to be computed, and we just need to store all these counters, which takes $O(d)$ additional space. 
 The largest drawback of this method is clearly that it only applies for very restrictive models. 
-Cao and Yang showed similar techniques work for other simple models, such as certain types of SVMs and decision trees, but this leaves much to be desired for more complex models employed today. 
+Cao and Yang showed similar techniques work for other simple models, such as certain types of SVMs and decision trees, but this leaves much to be desired for more complex models employed today.[as: Cauwenberghs and Poggio.[@CP00] is also an exact SVM incremental / decremental learning procedure but it is not as efficient as optimization based methods.]
 
 To summarize: 
 * **Unlearning time**: Very efficient, linear in the size of the unlearn set. 
 * **Supported models**: Highly limited, only restricted classes of models.  
-* **Effect of large unlearning set**: Minimal, unlearning time scales linearly in size of the set. 
+* **Effect of large unlearning set**: Minimal, unlearning time scales linearly in size of the set.[as: Wouldn't all settings have this?]
 * **Utility**: Exact unlearning, so it suffers no loss in utility. However, if we have to change to a model that supports this type of unlearning, we may suffer significant utility loss.  
 * **Training overhead**: Minimal, only needs to compute all the counters. 
 * **Supplemental information**: Minimal, only needs to store all the counters. 
@@ -250,7 +249,7 @@ While this definition can be a bit of a mouthful, operationally, it suffices to 
 
 With this definition in place, we turn our attention to how to guarantee approximate unlearning. 
 Perhaps surprisingly, there exist methods to *mathematically prove* (or *certify*) that an unlearning procedure satisfies approximate unlearning. 
-While these can be heavy or limited in the situations in which they apply, the ability to give mathematical guarantees of approximate unlearning is very strong. 
+While these can be heavy or limited in the situations in which they apply, the ability to give mathematical guarantees of approximate unlearning is very strong.[as: Do you want to say anything here about other definitions? Renyi Divergence based unlearning, etc etc, or are we sticking with this DP style one?]
 
 ### Differential Privacy
 
@@ -282,7 +281,7 @@ $$
 \Pr[M(X) \in T] \leq e^{k\varepsilon} \Pr[M(X') \in T] + ke^{(k-1)\varepsilon}\delta. 
 $$
 As we can see, the guarantees degrade exponentially in the size of the unlearning set $k$, which gives very weak unlearning for sets of larger size. 
-This is the principal downside of using DP directly for machine unlearning. 
+This is the principal downside of using DP directly for machine unlearning.[as: Isn't the main downside utility? In a sense, this guarantee translates to a utility guarantee and this exponential blow up appears linearly, but you have not mentioned anything at all about utility curse of DP so far.]
 
 On the bright side, we have fairly general algorithms for training models with DP. 
 Differentially Private Stochastic Gradient Descent (DPSGD)[@SCS13][@BST14][@ACGMMTZ16] serves as a drop-in private replacement for SGD, differing in that individual gradients are clipped and noise is added to their aggregate at each step. 
@@ -346,7 +345,8 @@ Note that influence functions only allow us to *approximate* the value of the *p
 In order to give the stronger guarantee as required by approximate unlearning, we must add Gaussian noise to the parameter vector in order to mask the difference; analysis is similar to the Gaussian mechanism from differential privacy.[@DKMMN06]
 
 The most significant drawback of this approach is that it gives certifiable machine unlearning only for convex models. 
-This is because we have to bound the error of the approximation due to influence functions, which can only be done for convex settings. 
+This is because we have to bound the error of the approximation due to influence functions, which can only be done for convex settings.[as: "This is because we have to bound the error of the approximation due to influence functions, which can only be done for convex settings" --- this seems like a strong statement. How about "easy to do in convex settings?"]
+
 Nonetheless, there is some evidence that this method can be reasonably effective in non-convex settings.[@MTBRPMG26]
 
 In summary:  

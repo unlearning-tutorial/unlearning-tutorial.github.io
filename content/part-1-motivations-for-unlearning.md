@@ -25,9 +25,7 @@ Machine learning models are frequently trained on datasets containing sensitive 
 Consider, for example, a facial recognition model which is trained on pictures of people's faces. 
 Or a predictive model used in healthcare, trained on patients' electronic health records (EHRs). 
 Yet another example is large language models (LLMs), which are frequently trained on massive, uncurated online datasets, which may contain personal information of many individuals. 
-In all these cases, privacy of the dataset and, in general, the downstream model, enters the picture. 
-
-[as: Can we give any examples here?]
+In all these cases, privacy of the dataset and, in general, the downstream model, enters the picture.[as: Can we give any examples here?]
 
 Privacy legislation in several jurisdictions controls what rights individuals have over their data, after it has been collected and used by an organization. 
 Perhaps the most well-known privacy legislation is the European Union's General Data Protection Regulation (GDPR).[@gdpr]
@@ -39,18 +37,14 @@ The law goes on to enumerate several conditions under which data deletion is req
 
 The GDPR is the canonical example of privacy legislation mandating a right to be forgotten, but it is far from the only one. 
 In the United States, 22 different states have signed privacy legislation into law, and another 17 have had privacy bills introduced.[@iapp]
-Every single one of these laws and bills protects a "right to delete."
-
-[as: Does it make sense to consider Aloni's paper here which argues what GDPR actually does? This one and others: https://arxiv.org/abs/1904.06009]
+Every single one of these laws and bills protects a "right to delete."[as: Does it make sense to consider Aloni's paper here which argues what GDPR actually does? This one and others: https://arxiv.org/abs/1904.06009]
 
 If an individual requests for their data to be deleted, what obligations does the organization have? 
 At the very least, the organization is obligated to delete that individual's data from any database they may have. 
 But the more interesting question is how this affects any models that have been trained on that individual's data. 
 
 One 2021 case involves a California-based company, Everalbum, Inc., which non-consensually trained models on their users' photos and videos.[@ftc]
-In a settlement with the Federal Trade Commission, they were ordered to delete *all face embeddings and facial recognition models derived from this data* (see also the related concept of *model disgorgement*). 
-
-[as: Does it make sense to discuss what happened to this company afterwards? Did it go bankrupt? Got a lot of bad PR, etc? In particular, why can someone not ignore the laws and just pay the penalty here?]
+In a settlement with the Federal Trade Commission, they were ordered to delete *all face embeddings and facial recognition models derived from this data* (see also the related concept of *model disgorgement*).[as: Does it make sense to discuss what happened to this company afterwards? Did it go bankrupt? Got a lot of bad PR, etc? In particular, why can someone not ignore the laws and just pay the penalty here?]
 
 Separately, the United Kingdom's Information Commissioner's Office advises that models may implicitly or explicitly encode personal data which they were trained upon.[@ico]
 They suggest that obligation to remove this data from the trained model may vary depending on the circumstances, and recommend implementing a model deployment pipeline that enables rapid accommodation of removal requests. 
@@ -71,9 +65,7 @@ If a model is discovered to have been trained on copyrighted material, machine u
 Diffusion models are remarkably data-efficient when it comes to mimicking the *style* of an artist, requiring only a few examples before they are able to produce more images in the same style.
 Note that under United States law,[@17USC102] style is not generally considered to be protectable by copyright. 
 Nonetheless, copying the style of many contemporary artists is considered to be very inappropriate by those in the community and a violation of social norms. 
-Unlearning all training data points which belong to a particular artist may remove that model's ability to produce outputs in their style. 
-
-[as: Should we add any discussion at all on probabilistic techniques to protect copyright, e.g. from Boaz and Sham, etc and why they are not sufficient? Why do we need unlearning if we have these techniques?]
+Unlearning all training data points which belong to a particular artist may remove that model's ability to produce outputs in their style.[as: Should we add any discussion at all on probabilistic techniques to protect copyright, e.g. from Boaz and Sham, etc and why they are not sufficient? Why do we need unlearning if we have these techniques?]
 
 
 ### Safety {#safety}
@@ -87,9 +79,7 @@ For example, with sufficient knowledge of chemistry and reasoning capabilities, 
 
 A related risk concerns models producing images of harmful content, including pornography or violence.
 Defining such concepts and determining which training datapoints comprise them is even more difficult, as the line for obscenity is hard to draw even for humans.[@Jacobellis]
-Nonetheless, unlearning may be a useful tool in modifying model behaviour to avoid these concepts. 
-
-[as: MINOR AND USELESS: should we change pornography to child pornography. I think many people may debate why "pornography" is good vs bad.]
+Nonetheless, unlearning may be a useful tool in modifying model behaviour to avoid these concepts.[as: MINOR AND USELESS: should we change pornography to child pornography. I think many people may debate why "pornography" is good vs bad.]
 
 Finally, an adjacent topic in AI safety involves protection against data poisoning attacks.
 In a data poisoning attack, a malicious adversary injects a small number of training datapoints to detrimentally affect the final model. 
@@ -111,9 +101,7 @@ Accounting for these types of stale data, potentially through machine unlearning
 
 One of the oldest instances of machine unlearning appears in a 2000 paper of Cauwenberghs and Poggio.[@CP00]
 They propose an online algorithm for incrementally training a Support Vector Machine (SVM): given a trained SVM, how can one quickly modify the solution so that it accounts for one more training point? 
-They further observe that this procedure can be reversed for the purpose of "decremental 'unlearning,'" which they motivate by the fact that one can quickly evaluate leave-one-out (LOO) performance, a classic measure used to understand model generalization. 
-
-[as: I think this technique can also be used for data attribution, anti-distillation, etc.]
+They further observe that this procedure can be reversed for the purpose of "decremental 'unlearning,'" which they motivate by the fact that one can quickly evaluate leave-one-out (LOO) performance, a classic measure used to understand model generalization.[as: I think this technique can also be used for data attribution, anti-distillation, etc.]
 
 ## Discussion {#discussion}
 

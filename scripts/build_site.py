@@ -30,7 +30,38 @@ INLINE_MATH_RE = re.compile(r"(?<!\\)\$(.+?)(?<!\\)\$")
 PAREN_MATH_RE = re.compile(r"\\\((.+?)\\\)")
 BRACKET_MATH_RE = re.compile(r"\\\[(.+?)\\\]")
 MATH_PLACEHOLDER_RE = re.compile(r"\x00MATH(\d+)\x00")
-AUTHOR_COMMENT_RE = re.compile(r"^\[as:\s*(.+?)\s*\]$")
+INLINE_AUTHOR_COMMENT_RE = re.compile(
+    r"\[as:\s*((?:[^\[\]]|\[@\w+[\w-]*\])*?)\s*\]"
+)
+
+
+def render_with_author_comments(
+    text: str,
+    citation_labels: dict[str, int] | None,
+    *,
+    wrap_text: bool = True,
+) -> str:
+    parts: list[str] = []
+    last = 0
+
+    for match in INLINE_AUTHOR_COMMENT_RE.finditer(text):
+        if match.start() > last:
+            chunk = text[last : match.start()].strip()
+            if chunk:
+                parts.append(render_inline(chunk, citation_labels))
+        comment = html.escape(match.group(1))
+        parts.append(f'<span class="author-comment">[as: {comment}]</span>')
+        last = match.end()
+
+    remainder = text[last:].strip()
+    if remainder:
+        parts.append(render_inline(remainder, citation_labels))
+
+    if not parts:
+        return ""
+
+    inner = "".join(parts)
+    return f"<p>{inner}</p>" if wrap_text else inner
 
 
 def slugify(text: str) -> str:
@@ -122,7 +153,7 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
         nonlocal paragraph_lines
         if paragraph_lines:
             text = " ".join(line.strip() for line in paragraph_lines)
-            blocks.append(f"<p>{render_inline(text, citation_labels)}</p>")
+            blocks.append(render_with_author_comments(text, citation_labels))
             paragraph_lines = []
 
     def flush_quote() -> None:
@@ -153,7 +184,7 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
         for item_text, item_id in ordered_items:
             id_attr = f' id="{html.escape(item_id, quote=True)}"' if item_id else ""
             rendered_items.append(
-                f"  <li{id_attr}>{render_inline(item_text.strip(), citation_labels)}</li>"
+                f"  <li{id_attr}>{render_with_author_comments(item_text.strip(), citation_labels, wrap_text=False)}</li>"
             )
         blocks.append(f"<{tag}>\n" + "\n".join(rendered_items) + f"\n</{tag}>")
         list_type = None
@@ -212,13 +243,6 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
         if re.fullmatch(r"-{3,}", stripped):
             flush_all()
             blocks.append("<hr />")
-            continue
-
-        author_comment_match = AUTHOR_COMMENT_RE.match(stripped)
-        if author_comment_match:
-            flush_all()
-            comment_text = html.escape(author_comment_match.group(1))
-            blocks.append(f'<p class="author-comment">[as: {comment_text}]</p>')
             continue
 
         if stripped.startswith(">"):
