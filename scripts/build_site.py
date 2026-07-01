@@ -30,6 +30,7 @@ INLINE_MATH_RE = re.compile(r"(?<!\\)\$(.+?)(?<!\\)\$")
 PAREN_MATH_RE = re.compile(r"\\\((.+?)\\\)")
 BRACKET_MATH_RE = re.compile(r"\\\[(.+?)\\\]")
 MATH_PLACEHOLDER_RE = re.compile(r"\x00MATH(\d+)\x00")
+AUTHOR_COMMENT_RE = re.compile(r"^\[as:\s*(.+?)\s*\]$")
 
 
 def slugify(text: str) -> str:
@@ -211,6 +212,13 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
         if re.fullmatch(r"-{3,}", stripped):
             flush_all()
             blocks.append("<hr />")
+            continue
+
+        author_comment_match = AUTHOR_COMMENT_RE.match(stripped)
+        if author_comment_match:
+            flush_all()
+            comment_text = html.escape(author_comment_match.group(1))
+            blocks.append(f'<p class="author-comment">[as: {comment_text}]</p>')
             continue
 
         if stripped.startswith(">"):
