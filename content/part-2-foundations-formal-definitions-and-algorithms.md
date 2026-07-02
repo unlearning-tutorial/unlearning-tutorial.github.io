@@ -317,7 +317,7 @@ $$
 \hat \theta_{\gamma,j} \triangleq \arg\min_\theta \frac{1}{n} \sum_{i=1}^n \ell(z_i, \theta) + \gamma \ell(z_j, \theta). 
 $$
 
-A classic result of Cook and Weisberg[@CW82] gives us the following derivative for the parameter vector:
+A classic result of Cook and Weisberg[@CW82] gives us the following derivative for the parameter vector:[as: Do we want to say here that this technique requires a bunch of assumption, and regularity conditions?]
 $$
 \mathcal{I}(z_j) \triangleq \left. \frac{d\hat{\theta}_{\gamma,j}}{d\gamma} \right|_{\gamma=0} = -H_{\hat{\theta}}^{-1} \nabla_{\theta} \ell(z_j, \hat{\theta}),
 $$
