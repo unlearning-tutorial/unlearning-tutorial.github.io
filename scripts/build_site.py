@@ -21,11 +21,13 @@ ID_SUFFIX_RE = re.compile(r"^(.*?)\s*\{#([A-Za-z0-9_-]+)\}\s*$")
 UL_RE = re.compile(r"^[-*]\s+(.+)$")
 OL_RE = re.compile(r"^\d+\.\s+(.+)$")
 REF_ITEM_RE = re.compile(r"^\{#([A-Za-z0-9_-]+)\}\s*(.+)$")
+IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 STRONG_RE = re.compile(r"\*\*(.+?)\*\*")
 EM_RE = re.compile(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)")
 CODE_RE = re.compile(r"`([^`]+)`")
 CITATION_RE = re.compile(r"\[@([A-Za-z0-9_-]+)\]")
+MATH_RE = re.compile(r"\$\$.+?\$\$|\\\(.+?\\\)|\\\[.+?\\\]", re.DOTALL)
 
 
 def slugify(text: str) -> str:
@@ -46,11 +48,27 @@ def parse_front_matter(text: str) -> tuple[dict, str]:
 def render_inline(
     text: str, citation_labels: dict[str, int] | None = None
 ) -> str:
+    # Stash math spans so Markdown escaping/substitutions never mangle LaTeX
+    # (e.g. `*` -> <em>, `_` subscripts, `[x](y)`). MathJax renders them later.
+    math_spans: list[str] = []
+
+    def stash_math(match: re.Match[str]) -> str:
+        math_spans.append(match.group(0))
+        return f"\x00MATH{len(math_spans) - 1}\x00"
+
+    text = MATH_RE.sub(stash_math, text)
     escaped = html.escape(text)
     escaped = CITATION_RE.sub(
         lambda m: (
             f'<a class="citation" href="#{html.escape(m.group(1))}">'
             f'[{html.escape(str(get_citation_label(m.group(1), citation_labels)))}]</a>'
+        ),
+        escaped,
+    )
+    escaped = IMAGE_RE.sub(
+        lambda m: (
+            f'<img src="{html.escape(m.group(2), quote=True)}" '
+            f'alt="{html.escape(m.group(1), quote=True)}" />'
         ),
         escaped,
     )
@@ -61,6 +79,8 @@ def render_inline(
     escaped = CODE_RE.sub(lambda m: f"<code>{m.group(1)}</code>", escaped)
     escaped = STRONG_RE.sub(lambda m: f"<strong>{m.group(1)}</strong>", escaped)
     escaped = EM_RE.sub(lambda m: f"<em>{m.group(1)}</em>", escaped)
+    for index, span in enumerate(math_spans):
+        escaped = escaped.replace(f"\x00MATH{index}\x00", html.escape(span))
     return escaped
 
 
@@ -161,6 +181,23 @@ def render_markdown(markdown_text: str) -> tuple[str, list[dict[str, str | int]]
         if re.fullmatch(r"-{3,}", stripped):
             flush_all()
             blocks.append("<hr />")
+            continue
+
+        image_match = IMAGE_RE.fullmatch(stripped)
+        if image_match:
+            flush_all()
+            alt_text = image_match.group(1).strip()
+            src_attr = html.escape(image_match.group(2).strip(), quote=True)
+            alt_attr = html.escape(alt_text, quote=True)
+            caption = (
+                f"<figcaption>{render_inline(alt_text, citation_labels)}</figcaption>"
+                if alt_text
+                else ""
+            )
+            blocks.append(
+                f'<figure class="figure">'
+                f'<img src="{src_attr}" alt="{alt_attr}" />{caption}</figure>'
+            )
             continue
 
         if stripped.startswith(">"):
@@ -303,6 +340,11 @@ def copy_static_files(output_dir: Path) -> None:
         if source.resolve() == destination.resolve():
             continue
         shutil.copy2(source, destination)
+
+    figures_source = CONTENT_DIR / "figures"
+    figures_destination = output_dir / "figures"
+    if figures_source.is_dir() and figures_source.resolve() != figures_destination.resolve():
+        shutil.copytree(figures_source, figures_destination, dirs_exist_ok=True)
 
 
 def parse_args() -> argparse.Namespace:

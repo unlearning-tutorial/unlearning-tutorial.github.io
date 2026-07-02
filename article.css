@@ -112,6 +112,26 @@ a {
   line-height: 1.95;
 }
 
+.figure {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+}
+
+.figure figcaption {
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
 .article-body h2 {
   margin: 2.4rem 0 0.9rem;
   font-size: 2rem;
